@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITNEXIS GYM CLUB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="home.html" class="logo-container">
+            <h1 class="logo-text">FITNEXIS</h1>
+            <p class="logo-subtext">G Y M &nbsp;&nbsp; C L U B</p>
+        </a>
+        <button class="mobile-menu-btn" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="#about">ABOUT</a></li>
+            <li><a href="#classes">CLASSES</a></li>
+            <li><a href="#schedule">SCHEDULE</a></li>
+            <li><a href="#blogs">BLOG</a></li>
+            <li><a href="#contact">CONTACT</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-outline">LOGIN</a>
+            <a href="signup.html" class="btn-primary">SIGN UP</a>
+        </div>
+    </nav>
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="hero" style="background-image: linear-gradient(rgba(15, 15, 17, 0.4), rgba(15, 15, 17, 0.7)), url('../static/images/hero_banner.png');">
+            <div class="hero-content">
+                <p class="hero-small-yellow">YOUR BODY DESERVES BEST</p>
+                <h1 class="hero-title">Personalized Wellness for<br>Real Results</h1>
+                <a href="#about" class="btn-primary">Read More &rarr;</a>
+            </div>
+            <div class="hero-arrow-right">
+                <span>&gt;</span>
+            </div>
+        </section>
+
+        <!-- About Us (White) -->
+        <section id="about" class="about section-white">
+            <div class="about-grid">
+                <div class="about-text">
+                    <h2><span class="highlight">ABOUT</span> US</h2>
+                    <p>The gym is very important for maintaining our health. It helps us build strong, active, and healthy bodies. Regular exercise builds immunity.</p>
+                    <a href="#" class="btn-primary" style="margin-top: 1.5rem;">Read More &rarr;</a>
+                </div>
+                <div class="about-image-wrapper">
+                    <img src="../static/images/instructor_1.png" alt="About Us" class="about-img">
+                    <div class="play-button">
+                        <div class="play-icon">▶</div>
+                        <p>PLAY VIDEO</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Our Classes Specific (Dark) -->
+        <section class="specific-classes section-dark">
+            <div class="specific-grid">
+                <div class="circular-image">
+                    <img src="../static/images/class_crossfit.png" alt="Classes">
+                </div>
+                <div class="specific-text">
+                    <h2><span class="highlight">OUR</span> CLASSES</h2>
+                    <h3 class="subtitle-outline">SPECIFIC CLASSES<br>WHAT YOU NEEDS</h3>
+                    <p>The gym is very important for maintaining our health. It helps us to build strong, active, and healthy muscles. Regular exercise helps us stay fit and strong. Training your body brings more discipline and positive perspective in life.</p>
+                    <a href="#" class="link-yellow">SEE ALL CLASSES &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Classes We Provide (Dark) -->
+        <section id="classes" class="classes section-dark">
+            <div class="section-header-center">
+                <h2><span class="highlight">CLASSES</span> WE PROVIDE</h2>
+                <p class="header-desc">The classes you take provide value to your fitness and well being. Taking these classes regularly will help you in your daily life, reducing stress and promoting a healthy lifestyle.</p>
+            </div>
+            <div class="class-grid">
+                <div class="class-card">
+                    <img src="../static/images/class_crossfit.png" class="card-img" alt="Crossfit">
+                    <div class="card-content">
+                        <h3 class="highlight">CROSSFIT</h3>
+                        <p>John Doe</p>
+                        <div class="card-bottom-line"></div>
+                    </div>
+                </div>
+                <div class="class-card">
+                    <img src="../static/images/class_crossfit.png" class="card-img" alt="Yoga">
+                    <div class="card-content">
+                        <h3 class="highlight">YOGA</h3>
+                        <p>Jane Smith</p>
+                        <div class="card-bottom-line"></div>
+                    </div>
+                </div>
+                <div class="class-card">
+                    <img src="../static/images/class_crossfit.png" class="card-img" alt="Boxing">
+                    <div class="card-content">
+                        <h3 class="highlight">BOXING</h3>
+                        <p>Mike Tyson</p>
+                        <div class="card-bottom-line"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination">
+                <span>1</span> <span>/</span> <span class="active">2</span> <span>3</span> <span>&gt;</span>
+            </div>
+        </section>
+
+        <!-- Class Schedule (Dark) -->
+        <section id="schedule" class="schedule section-dark">
+            <div class="section-header-center">
+                <h2><span class="highlight">CLASS</span> SCHEDULE</h2>
+                <p class="header-desc">The gym is very important for maintaining our health. It helps us build strong, active, and healthy muscles. The gym environment allows you to enjoy the benefits of a healthy lifestyle.</p>
+            </div>
+            <div class="schedule-table">
+                <div class="table-header">
+                    <div>DAY</div>
+                    <div>TIME</div>
+                    <div>TRAINER</div>
+                </div>
+                <div class="table-row">
+                    <div>MONDAY</div>
+                    <div>08:00 AM</div>
+                    <div>JOHN DOE</div>
+                </div>
+                <div class="table-row">
+                    <div>WEDNESDAY</div>
+                    <div>10:00 AM</div>
+                    <div>JANE SMITH</div>
+                </div>
+                <div class="table-row">
+                    <div>FRIDAY</div>
+                    <div>06:00 PM</div>
+                    <div>MIKE TYSON</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Our Instructors (White) -->
+        <section id="instructors" class="instructors section-white">
+            <div class="section-header-center">
+                <h2><span class="highlight">OUR</span> INSTRUCTORS</h2>
+                <p class="header-desc" style="color:var(--text-dark);">Professional and certified trainers who are highly skilled in fitness and training.</p>
+            </div>
+            <div class="instructor-grid">
+                <div class="instructor-card-dark">
+                    <img src="../static/images/instructor_1.png" alt="John Doe">
+                    <div class="trainer-info">
+                        <h3>John Doe</h3>
+                        <p>Expert Trainer</p>
+                        <a href="#" class="btn-primary outline">VIEW PROFILE</a>
+                    </div>
+                </div>
+                <div class="instructor-card-dark">
+                    <img src="../static/images/instructor_1.png" alt="Jane Smith">
+                    <div class="trainer-info">
+                        <h3>Jane Smith</h3>
+                        <p>Expert Trainer</p>
+                        <a href="#" class="btn-primary outline">VIEW PROFILE</a>
+                    </div>
+                </div>
+                <div class="instructor-card-dark">
+                    <img src="../static/images/instructor_1.png" alt="Mike Tyson">
+                    <div class="trainer-info">
+                        <h3>Mike Tyson</h3>
+                        <p>Expert Trainer</p>
+                        <a href="#" class="btn-primary outline">VIEW PROFILE</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Our Blogs (Dark) -->
+        <section id="blogs" class="blogs section-dark">
+            <div class="section-header-center">
+                <h2><span class="highlight">OUR</span> BLOGS</h2>
+                <p class="header-desc">We have blogs dedicated to physical and mental well-being to help you stay motivated on your health journey.</p>
+            </div>
+            <div class="blog-grid">
+                <div class="blog-card">
+                    <img src="../static/images/hero_banner.png" alt="Blog 1">
+                    <div class="blog-info">
+                        <h3>How to Build Muscle Fast</h3>
+                        <p>12 Jan 2026 | By Admin</p>
+                    </div>
+                </div>
+                <div class="blog-card">
+                    <img src="../static/images/class_crossfit.png" alt="Blog 2">
+                    <div class="blog-info">
+                        <h3>Benefits of Daily Cardio</h3>
+                        <p>10 Jan 2026 | By Admin</p>
+                    </div>
+                </div>
+                <div class="blog-card">
+                    <img src="../static/images/instructor_1.png" alt="Blog 3">
+                    <div class="blog-info">
+                        <h3>Proper Weightlifting Form</h3>
+                        <p>05 Jan 2026 | By Admin</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Us (White) -->
+        <section id="contact" class="contact section-white">
+            <div class="section-header-center">
+                <h2><span class="highlight">CONTACT</span> US</h2>
+                <p class="header-desc" style="color:var(--text-dark);">For business collaboration and inquiries please leave us a message and our team will get back to you to discuss your health and fitness.</p>
+            </div>
+            
+            <div class="contact-info-row">
+                <div class="contact-icon-box">
+                    <div class="icon-circle">📍</div>
+                    <p>123, Central Street, Main Road<br>Dhaka, Bangladesh</p>
+                </div>
+                <div class="contact-icon-box">
+                    <div class="icon-circle">📞</div>
+                    <p>(+88) 01234 56789<br>(+88) 98765 43210</p>
+                </div>
+                <div class="contact-icon-box">
+                    <div class="icon-circle">✉</div>
+                    <p>info@fitnexis.com<br>support@fitnexis.com</p>
+                </div>
+            </div>
+
+            <div class="contact-main-grid">
+                <div class="contact-form-box">
+                    <form>
+                        <div class="form-row">
+                            <input type="text" placeholder="Name" required>
+                            <input type="email" placeholder="Email" required>
+                        </div>
+                        <textarea placeholder="Write message here..." rows="6" required></textarea>
+                        <button type="button" class="btn-primary full-width">SEND MESSAGE</button>
+                    </form>
+                </div>
+                <div class="contact-map-box">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.902442430139!2d90.3897482154316!3d23.750858094676575!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8a36c84c7e5%3A0xc3b83c74900a068e!2sDhaka!5e0!3m2!1sen!2sbd!4v1655183861214!5m2!1sen!2sbd" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col brand-col">
+                <a href="home.html" style="text-decoration: none; display: block; margin-bottom: 1rem;">
+                    <h1 class="logo-text" style="color: white; margin-bottom:0;">FITNEXIS</h1>
+                    <p class="logo-subtext" style="color: var(--text-muted); margin-bottom: 0;">G Y M &nbsp;&nbsp; C L U B</p>
+                </a>
+                <div class="social-icons">
+                    <span class="icon">IG</span>
+                    <span class="icon">FB</span>
+                    <span class="icon">TW</span>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>About Us</h3>
+                <a href="#">Company Profile</a>
+                <a href="#">Our Management</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <h3>Useful Links</h3>
+                <a href="#">Blogs</a>
+                <a href="#">Class Schedule</a>
+                <a href="#">Testimonial</a>
+                <a href="#">Payment Methods</a>
+            </div>
+            <div class="footer-col">
+                <h3>Support</h3>
+                <a href="#">Contact Us</a>
+                <a href="#">Support Center</a>
+                <a href="#">FAQ</a>
+            </div>
+        </div>
+        <div class="footer-newsletter">
+            <form class="newsletter-form">
+                <input type="email" placeholder="EMAIL HERE">
+                <button type="button" class="btn-primary">SEND</button>
+            </form>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; All rights reserved | 2026</p>
+        </div>
+    </footer>
+    <script>
+        function toggleMenu() {
+            document.querySelector('.nav-links').classList.toggle('active');
+            document.querySelector('.nav-actions').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

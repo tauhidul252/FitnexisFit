@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark animate-fade" style="padding-top: 120px; min-height: 100vh;">
+    <div class="container" style="max-width: 960px; margin: 0 auto; width: 100%; padding: 0 1rem 4rem;">
+
+        <!-- Header -->
+        <div class="section-header-center" style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.4rem;">Choose Your Trainer</h2>
+            <p class="header-desc" style="font-size: 0.85rem;">
+                Plan: <span class="highlight fw-bold">{{ plan.title }}</span> &mdash; Select a trainer to see their available schedule
+            </p>
+        </div>
+
+        {% if trainer_data %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            {% for item in trainer_data %}
+            <a href="{% url 'select_class' plan.id %}?trainer_id={{ item.trainer.id }}"
+               class="trainer-card glass-card hover-glow transition"
+               style="padding: 1.8rem !important; text-decoration: none; display: block; text-align: center;">
+
+                <!-- Avatar -->
+                <div style="margin-bottom: 1rem;">
+                    <img src="{% if item.trainer.profile.profile_pic %}{{ item.trainer.profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ item.trainer.username }}&background=f5b026&color=000&size=80{% endif %}"
+                         alt="{{ item.trainer.username }}"
+                         style="width: 72px; height: 72px; border-radius: 50%; border: 3px solid rgba(245,176,38,0.4); object-fit: cover;">
+                </div>
+
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem; color: #fff;">{{ item.trainer.username|capfirst }}</h3>
+
+                {% if item.trainer.profile.bio %}
+                <p style="font-size: 0.78rem; color: #888; margin-bottom: 1rem; line-height: 1.4;">{{ item.trainer.profile.bio|truncatechars:80 }}</p>
+                {% else %}
+                <p style="font-size: 0.78rem; color: #888; margin-bottom: 1rem;">Professional Fitness Trainer</p>
+                {% endif %}
+
+                <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.2rem;">
+                    <div style="text-align: center;">
+                        <p style="font-size: 1.3rem; font-weight: 900; color: var(--accent); margin: 0;">{{ item.total_classes }}</p>
+                        <p style="font-size: 0.7rem; color: #666; margin: 0;">Total Classes</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <p style="font-size: 1.3rem; font-weight: 900; color: #22c55e; margin: 0;">{{ item.upcoming_classes }}</p>
+                        <p style="font-size: 0.7rem; color: #666; margin: 0;">Upcoming</p>
+                    </div>
+                </div>
+
+                <div class="btn-primary" style="display: block; padding: 0.5rem; font-size: 0.82rem; text-align: center;">
+                    Select & View Schedule &rarr;
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-card" style="text-align: center; padding: 3rem !important;">
+            <i class="fas fa-user-times" style="font-size: 3rem; color: #555; margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--text-muted);">No Trainers Available</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">There are no trainers registered yet. Please contact admin.</p>
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <a href="{% url 'membership_plans' %}" style="color: var(--text-muted); font-size: 0.8rem;">
+                <i class="fas fa-arrow-left me-1"></i> Back to Plans
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .trainer-card { transition: all 0.3s ease; cursor: pointer; }
+    .trainer-card:hover { transform: translateY(-8px); border-color: rgba(245,176,38,0.5) !important; }
+</style>
+{% endblock %}

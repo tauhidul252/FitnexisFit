@@ -1,0 +1,830 @@
+ {% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark" style="padding-top: 100px;">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="user-info">
+                <div class="avatar-circle">
+                    {{ request.user.username|slice:":2"|upper }}
+                </div>
+                <h3>Coach {{ request.user.first_name|default:request.user.username|capfirst }}</h3>
+                <p class="role-badge">{{ request.user.profile.role }}</p>
+            </div>
+            <nav class="side-nav">
+                <a href="javascript:void(0)" onclick="showSection('schedule', this)" class="nav-btn active">Class Schedule</a>
+                <a href="javascript:void(0)" onclick="showSection('members', this)" class="nav-btn">My Members</a>
+                <a href="javascript:void(0)" onclick="showSection('progress', this)" class="nav-btn">Progress Updates</a>
+                <a href="javascript:void(0)" onclick="showSection('profile', this)" class="nav-btn">Profile</a>
+            </nav>
+        </aside>
+
+        <div class="dashboard-main">
+            <!-- SECTION: CLASS SCHEDULE -->
+            <div id="section-schedule" class="dash-section">
+                <header class="dash-header">
+                    <h2>Trainer Dashboard</h2>
+                    <p>Manage your classes, schedule sessions, and mark today's attendance.</p>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.1s;">
+                        <h4>Total Classes</h4>
+                        <p class="stat-value">{{ classes.count }}</p>
+                        <p class="stat-sub">Active schedule</p>
+                    </div>
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.2s;" onclick="showSection('members', document.querySelectorAll('.nav-btn')[1])" style="cursor:pointer;">
+                        <h4>Assigned Members</h4>
+                        <p class="stat-value">{{ assigned_members_count }}</p>
+                        <p class="stat-sub">Unique students</p>
+                    </div>
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.3s;">
+                        <h4>Next Session</h4>
+                        <p class="stat-value">{{ next_session.schedule_time|date:"g:i A"|default:"None" }}</p>
+                        <p class="stat-sub">{{ next_session.title|default:"No sessions" }}</p>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0;"><i class="fas fa-calendar-alt text-accent me-2"></i>My Class Schedule</h3>
+                            <button onclick="toggleModal('addClassModal')" class="btn-small">Add Class</button>
+                        </div>
+                        <div class="schedule-list">
+                            {% for class in classes %}
+                            <div class="schedule-item">
+                                <div style="display:flex; gap:1rem; align-items:center;">
+                                    {% if class.image %}
+                                    <img src="{{ class.image.url }}" alt="{{ class.title }}" style="width:72px; height:56px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                    {% endif %}
+                                    <div>
+                                        <h4 class="text-white">{{ class.title }}</h4>
+                                        <p>{{ class.description|truncatewords:10 }}</p>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
+                                    <div>
+                                        <p class="highlight" style="margin:0">{{ class.schedule_time|date:"M d, g:i A" }}</p>
+                                        <p style="margin:0">{{ class.capacity }} Spots</p>
+                                    </div>
+                                    <div style="margin-top:0.6rem; display:flex; gap:0.5rem;">
+                                        {% if class.trainer == request.user or request.user.profile.role == 'admin' %}
+                                        <button class="btn-small" onclick="openEditModal({{ class.id }}, '{{ class.title|escapejs }}', '{{ class.description|escapejs }}', '{{ class.schedule_time|date:'Y-m-d' }}T{{ class.schedule_time|date:'H:i' }}', {{ class.capacity }}, {{ class.duration_minutes }}, '{% if class.image %}{{ class.image.url }}{% endif %}')">Edit</button>
+                                        <a href="{% url 'delete_class' class.id %}" class="btn-small" style="background:#e74c3c; color:#fff;" onclick="return confirm('Delete this class?');">Delete</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>No classes scheduled yet.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <h3><i class="fas fa-check-double text-accent me-2"></i>Mark Attendance</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Confirm present members for today's classes.</p>
+                        <div class="booking-list">
+                            {% for booking in todays_bookings %}
+                            <div class="booking-item">
+                                <div>
+                                    <h4 class="text-white">{{ booking.user.username|capfirst }}</h4>
+                                    <p>{{ booking.gym_class.title }}</p>
+                                </div>
+                                <a href="{% url 'mark_attendance' booking.id %}" class="btn-small">Mark Present</a>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>No bookings for today's classes.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: MY MEMBERS -->
+            <div id="section-members" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>My Assigned Members</h2>
+                    <p>View and manage the students enrolled in your gym classes.</p>
+                </header>
+
+                <div class="content-card" style="margin-top: 1.5rem;">
+                    <div class="members-grid">
+                        {% for member in assigned_members %}
+                        <div class="member-card">
+                            <div class="member-header">
+                                <div class="member-avatar">
+                                    {{ member.username|slice:":2"|upper }}
+                                </div>
+                                <div>
+                                    <h4 class="text-white" style="margin: 0 0 0.2rem 0;">{{ member.get_full_name|default:member.username|capfirst }}</h4>
+                                    <p style="margin: 0; font-size: 0.75rem; color: var(--accent);">@{{ member.username }}</p>
+                                </div>
+                            </div>
+                            <hr class="card-divider">
+                            <div class="member-details">
+                                <p><strong>Email:</strong> {{ member.email|default:"N/A" }}</p>
+                                <p><strong>Phone:</strong> {{ member.profile.phone|default:"N/A" }}</p>
+                                <p><strong>Address:</strong> {{ member.profile.address|truncatechars:40|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state" style="padding: 3rem 0;">
+                            <p>No members are currently assigned to your classes.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: PROGRESS UPDATES -->
+            <div id="section-progress" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>Members Fitness Progress</h2>
+                    <p>Track updates and logs from members enrolled in your sessions.</p>
+                </header>
+
+                <div class="content-card" style="margin-top: 1.5rem;">
+                    <div class="table-container">
+                        <table class="progress-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Date</th>
+                                    <th>Weight</th>
+                                    <th>Body Fat</th>
+                                    <th>Muscle Mass</th>
+                                    <th>Trainer Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progress in member_progress %}
+                                <tr>
+                                    <td>
+                                        <strong class="text-white">{{ progress.user.username|capfirst }}</strong>
+                                    </td>
+                                    <td>{{ progress.date|date:"M d, Y" }}</td>
+                                    <td class="highlight">{{ progress.weight }} kg</td>
+                                    <td>{{ progress.body_fat_percentage|default:"--" }}%</td>
+                                    <td>{{ progress.muscle_mass|default:"--" }} kg</td>
+                                    <td style="font-size: 0.85rem; max-width: 250px;" class="text-muted">{{ progress.notes|default:"No notes added." }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 3rem 0;" class="text-muted">
+                                        No progress updates registered for your members yet.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: PROFILE -->
+            <div id="section-profile" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>Trainer Profile</h2>
+                    <p>View and manage your public biography and contact info.</p>
+                </header>
+
+                <div class="profile-grid">
+                    <div class="content-card profile-details-card">
+                        <div class="profile-meta">
+                            <div class="avatar-large">
+                                {{ request.user.username|slice:":2"|upper }}
+                            </div>
+                            <h3 class="text-white" style="margin-top: 1rem; margin-bottom: 0.2rem;">Coach {{ request.user.get_full_name|default:request.user.username|capfirst }}</h3>
+                            <span class="role-badge">{{ request.user.profile.role }}</span>
+                        </div>
+                        <hr class="card-divider" style="margin: 1.5rem 0;">
+                        <div class="bio-display">
+                            <h4 class="text-accent" style="margin-bottom: 0.5rem;">About Me</h4>
+                            <p class="text-white" style="line-height: 1.6; font-size: 0.9rem;">
+                                {{ request.user.profile.bio|default:"Write a bio to share your background and fitness specialties with our gym members!" }}
+                            </p>
+                        </div>
+                        <div class="contact-info-list" style="margin-top: 1.5rem;">
+                            <p style="margin: 0.5rem 0;"><strong class="text-accent">Email:</strong> {{ request.user.email }}</p>
+                            <p style="margin: 0.5rem 0;"><strong class="text-accent">Phone:</strong> {{ request.user.profile.phone|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="content-card profile-edit-card">
+                        <h3 class="text-white" style="margin-bottom: 1.5rem;"><i class="fas fa-edit text-accent me-2"></i>Update Profile Details</h3>
+                        <form action="{% url 'trainer_dashboard' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    <input type="text" name="first_name" value="{{ request.user.first_name }}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    <input type="text" name="last_name" value="{{ request.user.last_name }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" name="email" value="{{ request.user.email }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" name="phone" value="{{ request.user.profile.phone }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Bio / Specialties</label>
+                                <textarea name="bio" rows="4" placeholder="Share your experience, specialties (e.g., CrossFit, Yoga), and training philosophy...">{{ request.user.profile.bio }}</textarea>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Add Class Modal -->
+<div id="addClassModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="toggleModal('addClassModal')">&times;</span>
+        <h3 class="text-white" style="margin-bottom: 1.5rem;"><i class="fas fa-plus text-accent me-2"></i>Schedule New Class</h3>
+        <form action="{% url 'add_class' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Class Title</label>
+                <input type="text" name="title" required placeholder="e.g. Yoga Flow">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" placeholder="What will be covered?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Schedule Time</label>
+                <input type="datetime-local" name="schedule_time" required>
+            </div>
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" name="capacity" value="20" required>
+            </div>
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input type="number" name="duration_minutes" value="60" min="15" max="300" required placeholder="e.g. 60">
+            </div>
+            <div class="form-group">
+                <label>Image (optional)</label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:1rem;">&#128190; Save &amp; Create Class</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div id="editClassModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="toggleModal('editClassModal')">&times;</span>
+        <h3 class="text-white" style="margin-bottom: 1.5rem;"><i class="fas fa-edit text-accent me-2"></i>Edit Class</h3>
+        <div id="classImagePreview" style="margin-bottom: 1.5rem; text-align: center; display: none;">
+            <img id="previewImage" src="" alt="Class Image" style="width: 100%; max-width: 300px; height: 200px; object-fit: cover; border-radius: 12px; border: 2px solid rgba(245, 176, 38, 0.3);">
+        </div>
+        <form id="editClassForm" action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Class Title</label>
+                <input id="edit_title" type="text" name="title" required placeholder="e.g. Yoga Flow">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="edit_description" name="description" placeholder="What will be covered?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Schedule Time</label>
+                <input id="edit_schedule_time" type="datetime-local" name="schedule_time" required>
+            </div>
+            <div class="form-group">
+                <label>Capacity</label>
+                <input id="edit_capacity" type="number" name="capacity" value="20" required>
+            </div>
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input id="edit_duration" type="number" name="duration_minutes" value="60" min="15" max="300" required>
+            </div>
+            <div class="form-group">
+                <label>Replace Image (optional)</label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:1rem;">&#128190; Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Styling Enhancements */
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        min-height: 80vh;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .sidebar {
+        background: rgba(26, 26, 26, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        height: fit-content;
+    }
+
+    .user-info {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .avatar-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--accent), #f39c12);
+        color: #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0 auto 1rem auto;
+        box-shadow: 0 4px 15px rgba(245, 176, 38, 0.2);
+    }
+
+    .role-badge {
+        background: rgba(245, 176, 38, 0.15);
+        color: var(--accent);
+        display: inline-block;
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(245, 176, 38, 0.3);
+    }
+
+    .side-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .side-nav a {
+        padding: 0.9rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .side-nav a.active, .side-nav a:hover {
+        background: rgba(245, 176, 38, 0.1);
+        color: var(--accent);
+        padding-left: 1.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .stat-card {
+        background: rgba(26, 26, 26, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 1.8rem;
+        border-radius: 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card h4 {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: var(--accent);
+        margin: 0.2rem 0;
+    }
+
+    .stat-sub {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+    }
+
+    .content-card {
+        background: rgba(26, 26, 26, 0.4);
+        backdrop-filter: blur(8px);
+        padding: 2rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .content-card h3 {
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .schedule-item, .booking-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .schedule-item:last-child, .booking-item:last-child {
+        border-bottom: none;
+    }
+
+    .schedule-item h4, .booking-item h4 {
+        font-size: 1.05rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .schedule-item p, .booking-item p {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2.5rem 0;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    /* Members Grid styling */
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .member-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(245, 176, 38, 0.3);
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .member-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .member-avatar {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .card-divider {
+        border: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 1rem 0;
+    }
+
+    .member-details p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0.5rem 0;
+    }
+
+    .member-details strong {
+        color: #ccc;
+    }
+
+    /* Progress Updates Table */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .progress-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .progress-table th {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .progress-table td {
+        padding: 1.2rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.92rem;
+    }
+
+    .progress-table tr:hover {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Profile Styles */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .profile-details-card {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem 2rem;
+    }
+
+    .avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), #e67e22);
+        color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        font-weight: 900;
+        box-shadow: 0 5px 20px rgba(245, 176, 38, 0.3);
+    }
+
+    .bio-display {
+        text-align: left;
+        width: 100%;
+    }
+
+    .contact-info-list {
+        text-align: left;
+        width: 100%;
+        font-size: 0.9rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Modals & Buttons */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+        background: var(--bg-dark-secondary);
+        margin: 8% auto;
+        padding: 2.5rem;
+        border: 1px solid rgba(245, 176, 38, 0.4);
+        width: 460px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 20px;
+        position: relative;
+        text-align: left;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .close {
+        position: absolute;
+        right: 1.5rem;
+        top: 1.2rem;
+        font-size: 1.8rem;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: color 0.2s;
+    }
+    
+    .close:hover {
+        color: #fff;
+    }
+
+    .form-group {
+        margin-bottom: 1.4rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.6rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+        border-color: var(--accent);
+        outline: none;
+        background: rgba(0, 0, 0, 0.6);
+        box-shadow: 0 0 8px rgba(245, 176, 38, 0.25);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 1.1rem;
+        background: linear-gradient(135deg, var(--accent), #e67e22);
+        color: #000;
+        border: none;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 176, 38, 0.3);
+    }
+
+    .btn-small {
+        background: var(--accent);
+        color: #000;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-small:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 10px rgba(245, 176, 38, 0.2);
+    }
+
+    @media (max-width: 1100px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-container {
+            grid-template-columns: 1fr;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function showSection(sectionId, element) {
+        // Hide all sections
+        document.querySelectorAll('.dash-section').forEach(function(sec) {
+            sec.style.display = 'none';
+        });
+        
+        // Show target section
+        document.getElementById('section-' + sectionId).style.display = 'block';
+        
+        // Update active class on nav buttons
+        document.querySelectorAll('.nav-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        element.classList.add('active');
+
+        // Update hash in URL
+        window.location.hash = sectionId;
+    }
+
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'block';
+        }
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+        if (event.target.className === 'modal') {
+            event.target.style.display = "none";
+        }
+    }
+
+    // Support deep-linking based on URL hash
+    window.addEventListener('DOMContentLoaded', () => {
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            const targetBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => 
+                btn.getAttribute('onclick').includes(hash)
+            );
+            if (targetBtn) {
+                showSection(hash, targetBtn);
+            }
+        }
+    });
+
+    // Open edit modal and populate fields
+    function openEditModal(id, title, description, scheduleTime, capacity, duration, imageUrl) {
+        const modal = document.getElementById('editClassModal');
+        const form = document.getElementById('editClassForm');
+        form.action = '/manage/classes/edit/' + id + '/';
+        document.getElementById('edit_title').value = title || '';
+        document.getElementById('edit_description').value = description || '';
+        document.getElementById('edit_schedule_time').value = scheduleTime || '';
+        document.getElementById('edit_capacity').value = capacity || 20;
+        document.getElementById('edit_duration').value = duration || 60;
+        
+        // Display image if available
+        const imagePreview = document.getElementById('classImagePreview');
+        const previewImage = document.getElementById('previewImage');
+        if (imageUrl) {
+            previewImage.src = imageUrl;
+            imagePreview.style.display = 'block';
+        } else {
+            imagePreview.style.display = 'none';
+        }
+        
+        modal.style.display = 'block';
+    }
+</script>
+{% endblock %}

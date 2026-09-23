@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark" style="padding-top:100px;min-height:100vh;">
+  <div class="dashboard-container">
+    {% include 'admin_sidebar.html' %}
+
+    <div class="dashboard-main">
+
+  <div class="pg-header">
+    <div>
+      <h2 class="pg-title">📅 Class Schedule</h2>
+      <p class="pg-sub">Manage gym classes, trainers, and timing</p>
+    </div>
+    <div class="pg-header-actions">
+      <a href="{% url 'admin_dashboard' %}" class="btn-outline-sm">← Dashboard</a>
+      <button onclick="openModal('addClassModal')" class="btn-accent">+ Add Class</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box accent"><span class="sbox-icon">🏋️</span><strong>{{ total_classes }}</strong><small>Total Classes</small></div>
+    <div class="stat-box"><span class="sbox-icon">🧑‍🏫</span><strong>{{ trainers.count }}</strong><small>Active Trainers</small></div>
+  </div>
+
+  {% if messages %}{% for msg in messages %}<div class="flash-msg {{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+
+  <!-- Search -->
+  <form method="GET" class="search-form">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" name="q" value="{{ search }}" placeholder="Search by class title or trainer...">
+    <button type="submit" class="btn-accent-sm">Search</button>
+    {% if search %}<a href="{% url 'manage_classes' %}" class="btn-clear">Clear</a>{% endif %}
+  </form>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>Class Title</th><th>Trainer</th><th>Schedule</th><th>Capacity</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        {% for c in classes %}
+        <tr>
+          <td><strong>{{ c.title }}</strong><br><small style="color:#666;">{{ c.description|truncatechars:40 }}</small></td>
+          <td>
+            <div class="user-cell">
+              <img src="https://ui-avatars.com/api/?name={{ c.trainer.username }}&background=f5b026&color=000&size=28" class="mini-avatar">
+              {{ c.trainer.username }}
+            </div>
+          </td>
+          <td><span class="time-badge">{{ c.schedule_time|date:"D, d M | H:i" }}</span></td>
+          <td><span class="status-badge status-ok">{{ c.capacity }} seats</span></td>
+          <td>
+            <div class="action-btns">
+              <button onclick="openEditClass('{{ c.id }}','{{ c.title }}','{{ c.description }}','{{ c.schedule_time|date:'Y-m-d\TH:i' }}','{{ c.capacity }}','{{ c.trainer.id }}')" class="btn-icon edit"><i class="fa-solid fa-pen"></i></button>
+              <a href="javascript:void(0)" onclick="showDeleteConfirm('{% url 'delete_class' c.id %}','Remove {{ c.title }} from schedule?')" class="btn-icon del"><i class="fa-solid fa-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty-row">No classes scheduled. Click "Add Class" to start!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD CLASS MODAL -->
+<div id="addClassModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addClassModal')">×</button>
+    <h3>📅 Add New Class</h3>
+    <form action="{% url 'add_class' %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label>Class Title *</label><input type="text" name="title" required placeholder="e.g. Morning Yoga"></div>
+      <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Date & Time *</label><input type="datetime-local" name="schedule_time" required></div>
+        <div class="form-group"><label>Capacity *</label><input type="number" name="capacity" value="20" min="1"></div>
+      </div>
+      <div class="form-group">
+        <label>Assign Trainer *</label>
+        <select name="trainer" required style="width:100%;padding:0.7rem;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;">
+          {% for t in trainers %}
+          <option value="{{ t.id }}">{{ t.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-accent" style="width:100%;">Schedule Class</button>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT CLASS MODAL -->
+<div id="editClassModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('editClassModal')">×</button>
+    <h3>✏️ Edit Class</h3>
+    <form id="editClassForm" method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label>Class Title *</label><input type="text" name="title" id="ec_title" required></div>
+      <div class="form-group"><label>Description</label><textarea name="description" id="ec_desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Date & Time *</label><input type="datetime-local" name="schedule_time" id="ec_time" required></div>
+        <div class="form-group"><label>Capacity *</label><input type="number" name="capacity" id="ec_cap" min="1"></div>
+      </div>
+      <div class="form-group">
+        <label>Trainer</label>
+        <select name="trainer" id="ec_trainer" style="width:100%;padding:0.7rem;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;">
+          {% for t in trainers %}
+          <option value="{{ t.id }}">{{ t.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button type="submit" class="btn-accent" style="width:100%;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── AI CHATBOT BUBBLE ─── -->
+<div id="aiChatBubble" class="ai-bubble" onclick="toggleChat()">
+  <span class="ai-bubble-icon">🤖</span>
+  <span class="ai-bubble-label">AI Assistant</span>
+</div>
+
+<div id="aiChatPanel" class="ai-panel" style="display:none;">
+  <div class="ai-panel-header">
+    <span>🤖 Fitnexis AI</span>
+    <button onclick="toggleChat()" class="ai-close-btn">×</button>
+  </div>
+  <div class="ai-messages" id="aiMessages">
+    <div class="ai-msg bot">👋 Hi Admin! Ask me about the class schedule, popular times, or trainer availability.</div>
+  </div>
+  <div class="ai-input-row">
+    <input type="text" id="aiInput" placeholder="e.g. How many classes today?" onkeydown="if(event.key==='Enter') sendAI()">
+    <button onclick="sendAI()" class="ai-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<style>
+  .pg-wrap { max-width:1300px;margin:0 auto;padding:0 2rem 4rem; }
+  .pg-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem; }
+  .pg-title { font-size:2rem;font-weight:900;color:#fff; }
+  .pg-sub { color:#888;font-size:0.95rem;margin-top:0.2rem; }
+  .btn-outline-sm { padding:0.6rem 1.2rem;border:1px solid #444;border-radius:8px;color:#ccc;font-weight:600;font-size:0.85rem;text-decoration:none; }
+  .btn-outline-sm:hover { border-color:var(--accent);color:var(--accent); }
+  .btn-accent { background:var(--accent);color:#000;padding:0.6rem 1.4rem;border-radius:8px;font-weight:800;border:none;cursor:pointer; }
+
+  .stats-row { display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap; }
+  .stat-box { flex:1;min-width:160px;background:rgba(255,255,255,0.04);border:1px solid #2a2a2a;border-radius:12px;padding:1.2rem;display:flex;align-items:center;gap:0.8rem; }
+  .stat-box.accent { border-color:rgba(245,176,38,0.3); }
+  .sbox-icon { font-size:1.6rem; }
+  .stat-box strong { display:block;font-size:1.4rem;font-weight:900;color:var(--accent); }
+  .stat-box small { color:#888;font-size:0.75rem; }
+
+  .flash-msg { padding:0.8rem 1.2rem;border-radius:8px;margin-bottom:0.8rem;font-weight:600; }
+  .flash-msg.success { background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e; }
+  .flash-msg.error { background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:#ff6666; }
+
+  .search-form { display:flex;align-items:center;gap:0.8rem;background:rgba(255,255,255,0.04);border:1px solid #333;border-radius:10px;padding:0.6rem 1.2rem;margin-bottom:1.5rem; }
+  .search-form i { color:#888; }
+  .search-form input { background:none;border:none;color:#fff;font-size:0.95rem;flex:1;outline:none; }
+  .btn-accent-sm { background:var(--accent);color:#000;border:none;border-radius:6px;padding:0.4rem 0.9rem;font-weight:700;cursor:pointer;font-size:0.85rem; }
+  .btn-clear { color:#888;font-size:0.85rem;text-decoration:none; }
+  .btn-clear:hover { color:#fff; }
+
+  .table-wrap { overflow-x:auto;border-radius:12px;border:1px solid #1e1e1e; }
+  .data-table { width:100%;border-collapse:collapse; }
+  .data-table thead th { background:#0e0e0e;padding:1rem 1.2rem;font-size:0.78rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.04em;text-align:left;border-bottom:1px solid #1e1e1e; }
+  .data-table tbody tr { border-bottom:1px solid #161616;transition:background .15s; }
+  .data-table tbody tr:hover { background:rgba(245,176,38,0.03); }
+  .data-table td { padding:0.9rem 1.2rem;font-size:0.9rem;vertical-align:middle; }
+  .empty-row { text-align:center;color:#555;padding:3rem; }
+
+  .user-cell { display:flex;align-items:center;gap:0.6rem; }
+  .mini-avatar { width:28px;height:28px;border-radius:50%; }
+  .time-badge { background:rgba(255,255,255,0.06);padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;color:#ccc; }
+  .status-badge { padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;font-weight:700; }
+  .status-ok { background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25); }
+
+  .action-btns { display:flex;gap:0.4rem; }
+  .btn-icon { width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:all .2s; }
+  .btn-icon.edit { background:rgba(245,176,38,0.15);color:var(--accent); }
+  .btn-icon.edit:hover { background:rgba(245,176,38,0.3); }
+  .btn-icon.del { background:rgba(255,68,68,0.12);color:#ff6666;text-decoration:none; }
+  .btn-icon.del:hover { background:rgba(255,68,68,0.25); }
+
+  /* Modals */
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal-box { background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:2rem;width:100%;max-width:480px;position:relative; }
+  .modal-box h3 { font-size:1.3rem;font-weight:800;margin-bottom:1.5rem;color:#fff; }
+  .modal-close { position:absolute;top:1rem;right:1.2rem;background:none;border:none;color:#666;font-size:1.5rem;cursor:pointer; }
+  .form-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+  .form-group { margin-bottom:1rem; }
+  .form-group label { display:block;font-size:0.82rem;color:#888;margin-bottom:0.4rem;font-weight:600; }
+  .form-group input,.form-group textarea { width:100%;padding:0.7rem 0.9rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;resize:none; }
+  .form-group input:focus,.form-group textarea:focus { outline:none;border-color:var(--accent); }
+</style>
+
+<script>
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  window.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('active'); });
+
+  function openEditClass(id, title, desc, time, cap, trainerId) {
+    document.getElementById('editClassForm').action = `/manage/classes/edit/${id}/`;
+    document.getElementById('ec_title').value = title;
+    document.getElementById('ec_desc').value  = desc;
+    document.getElementById('ec_time').value  = time;
+    document.getElementById('ec_cap').value   = cap;
+    document.getElementById('ec_trainer').value = trainerId;
+    openModal('editClassModal');
+  }
+</script>
+{% endblock %}

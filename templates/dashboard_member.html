@@ -1,0 +1,555 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark" style="padding-top: 100px;">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="user-info">
+                <h3>{{ request.user.username }}</h3>
+                <p class="role-badge">{{ request.user.profile.role }}</p>
+            </div>
+            <nav class="side-nav">
+                <a href="javascript:void(0)" onclick="showSection('overview', this)" class="nav-btn active">Overview</a>
+                <a href="javascript:void(0)" onclick="showSection('progress', this)" class="nav-btn">Progress</a>
+                <a href="javascript:void(0)" onclick="showSection('classes', this)" class="nav-btn">Classes</a>
+                <a href="{% url 'membership_plans' %}">Membership</a>
+                <a href="javascript:alert('Settings page coming soon!')">Settings</a>
+            </nav>
+        </aside>
+
+        <div class="dashboard-main">
+            <!-- SECTION: OVERVIEW -->
+            <div id="section-overview" class="dash-section">
+                <header class="dash-header">
+                    <h2>Welcome Back, <span class="highlight">{{ request.user.username }}</span>!</h2>
+                    <p>Track your fitness journey and manage your sessions.</p>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.1s;">
+                        <h4>Current Plan</h4>
+                        <p class="stat-value">{{ active_sub.plan.title|default:"No Plan" }}</p>
+                        <p class="stat-sub">{% if active_sub %}Expires: {{ active_sub.end_date }}{% else %}<a
+                                href="{% url 'membership_plans' %}" style="color:var(--accent);">Join now!</a>{% endif %}</p>
+                    </div>
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.2s;">
+                        <h4>Attendance</h4>
+                        <p class="stat-value">{{ attendance_pct }}%</p>
+                        <p class="stat-sub">Last 30 days</p>
+                    </div>
+                    <div class="stat-card glass-card hover-glow animate-fade" style="animation-delay: 0.3s;"
+                        onclick="showSection('classes', document.querySelector('[onclick*=classes]'))"
+                        style="cursor:pointer;">
+                        <h4>Booked Classes</h4>
+                        <p class="stat-value">{{ bookings|length }}</p>
+                        <p class="stat-sub">
+                            {% if next_booking %}
+                            {{ next_booking.gym_class.title }} — {{ next_booking.gym_class.schedule_time|date:"M d @ g:i A" }}
+                            {% else %}
+                            No classes booked
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: PROGRESS -->
+            <div id="section-progress" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>Your Progress</h2>
+                    <p>Track your weight and fitness metrics over time.</p>
+                </header>
+                <div class="content-card" style="margin-top: 1.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Recent Progress</h3>
+                        <button onclick="toggleModal('progressModal')" class="btn-small">Update</button>
+                    </div>
+                    <div class="progress-list">
+                        {% for entry in progress %}
+                        <div class="progress-item">
+                            <span>{{ entry.date }}</span>
+                            <span>{{ entry.weight }} kg</span>
+                        </div>
+                        {% empty %}
+                        <p>No progress recorded yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: CLASSES -->
+            <div id="section-classes" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>Class Hub</h2>
+                    <p>Manage your schedule, book new sessions, and handle payments.</p>
+                </header>
+
+                <div class="class-dashboard-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    <!-- Left Column: My Bookings -->
+                    <div class="class-column">
+                        <h3
+                            style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: inline-block;">
+                            My Schedule</h3>
+                        <div class="booking-cards" style="display: flex; flex-direction: column; gap: 1rem;">
+                            {% for booking in upcoming_bookings %}
+                            <div class="modern-card"
+                                style="background: linear-gradient(145deg, #1a1a1a, #2a2a2a); border-radius: 12px; padding: 1.2rem; border-left: 4px solid #22c55e; position: relative;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <h4 style="font-size: 1.1rem; margin: 0; color: #fff;">{{ booking.gym_class.title }}
+                                    </h4>
+                                    <span
+                                        style="background: rgba(34,197,94,0.12); color: #22c55e; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: bold;">Upcoming</span>
+                                </div>
+                                <p style="color: #bbb; font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
+                                    <i class="fas fa-clock" style="width: 15px;"></i> {{ booking.gym_class.schedule_time|date:"M d, g:i A" }}<br>
+                                    <i class="fas fa-user-tie" style="width: 15px;"></i> {{ booking.gym_class.trainer.username|capfirst }}
+                                </p>
+                                <form action="{% url 'cancel_booking' booking.id %}" method="POST" style="margin:0;">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 0.8rem; font-weight: 600;"
+                                        onmouseover="this.style.background='#ef4444'; this.style.color='#fff';"
+                                        onmouseout="this.style.background='transparent'; this.style.color='#ef4444';"><i
+                                            class="fas fa-times"></i> Cancel Booking</button>
+                                </form>
+                            </div>
+                            {% endfor %}
+
+                            {% for booking in past_bookings %}
+                            <div class="modern-card"
+                                style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 1.2rem; border-left: 4px solid #555;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <h4 style="font-size: 1.1rem; margin: 0; color: #888;">{{ booking.gym_class.title }}
+                                    </h4>
+                                    <span
+                                        style="background: rgba(100,100,100,0.15); color: #888; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: bold;">Completed</span>
+                                </div>
+                                <p style="color: #777; font-size: 0.85rem; margin: 0;">
+                                    <i class="fas fa-clock" style="width: 15px;"></i> {{ booking.gym_class.schedule_time|date:"M d, Y" }}
+                                </p>
+                            </div>
+                            {% endfor %}
+
+                            {% if not bookings %}
+                            <div
+                                style="text-align: center; padding: 3rem 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed #444;">
+                                <i class="fas fa-calendar-times"
+                                    style="font-size: 2rem; color: #555; margin-bottom: 1rem;"></i>
+                                <p style="color: #888; margin: 0;">No classes booked yet.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Available Classes -->
+                    <div class="class-column">
+                        <h3
+                            style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: inline-block;">
+                            Discover Classes</h3>
+                        <div class="available-cards" style="display: flex; flex-direction: column; gap: 1rem;">
+                            {% for class in available_classes %}
+                            <div class="modern-card"
+                                style="background: #1e1e1e; border-radius: 12px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.3)';"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                <div
+                                    style="padding: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--accent);">{{ class.title }}</h4>
+                                        <p style="color: #bbb; font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                                            <i class="fas fa-clock" style="width: 15px;"></i> {{ class.schedule_time|date:"M d @ g:i A" }}<br>
+                                            <i class="fas fa-user-tie" style="width: 15px;"></i> {{ class.trainer.username|capfirst }}
+                                        </p>
+                                    </div>
+                                    <button onclick="openPaymentModal({{ class.id }}, '{{ class.title|escapejs }}')"
+                                        style="background: var(--accent); color: #000; font-weight: bold; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; transition: transform 0.2s, filter 0.2s;"
+                                        onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.1)';"
+                                        onmouseout="this.style.transform='scale(1)'; this.style.filter='none';"><i
+                                            class="fas fa-bolt"></i> Book</button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div
+                                style="text-align: center; padding: 3rem 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed #444;">
+                                <i class="fas fa-search-minus"
+                                    style="font-size: 2rem; color: #555; margin-bottom: 1rem;"></i>
+                                <p style="color: #888; margin: 0;">No more classes available.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Progress Modal -->
+<div id="progressModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="toggleModal('progressModal')">&times;</span>
+        <h3>Update Your Progress</h3>
+        <form action="{% url 'update_progress' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.1" name="weight" required placeholder="e.g. 75.5">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes" placeholder="How are you feeling?"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Save Progress</button>
+        </form>
+    </div>
+</div>
+
+<!-- Payment Modal for Classes -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content"
+        style="max-width: 400px; padding: 2.5rem; background: #1a1a1a; border-radius: 16px; border: 1px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <span class="close" onclick="closePaymentModal()"
+            style="color: #fff; position: absolute; right: 1.5rem; top: 1.5rem; cursor: pointer; font-size: 1.5rem;">&times;</span>
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <i class="fas fa-credit-card" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 1rem;"></i>
+            <h3 style="margin: 0; font-size: 1.5rem;">Complete Booking</h3>
+            <p style="color: #aaa; font-size: 0.9rem; margin-top: 0.5rem;">You are booking: <strong
+                    id="payment-class-title" style="color: #fff;"></strong></p>
+        </div>
+
+        <form id="paymentForm" action="" method="GET">
+            <div
+                style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #bbb;">Booking Fee</span>
+                <strong style="font-size: 1.2rem; color: var(--accent);">$5.00</strong>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="color: #bbb; font-size: 0.85rem; display:block; margin-bottom:0.3rem;">Cardholder
+                    Name</label>
+                <input type="text" required placeholder="John Doe"
+                    style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="color: #bbb; font-size: 0.85rem; display:block; margin-bottom:0.3rem;">Card/Student ID
+                    Number</label>
+                <input type="text" required placeholder="202300001****" pattern="\d{13,16}"
+                    title="13 to 16 digit card or student ID number"
+                    style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label style="color: #bbb; font-size: 0.85rem; display:block; margin-bottom:0.3rem;">Expiry
+                        (MM/YY)</label>
+                    <input type="text" required placeholder="12/25"
+                        style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box;">
+                </div>
+                <div class="form-group">
+                    <label style="color: #bbb; font-size: 0.85rem; display:block; margin-bottom:0.3rem;">CVC</label>
+                    <input type="text" required placeholder="123" pattern="\d{3}"
+                        style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box;">
+                </div>
+            </div>
+            <button type="submit"
+                style="width: 100%; padding: 1rem; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s;"
+                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><i
+                    class="fas fa-lock"></i> Pay & Confirm Booking</button>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+</section>
+
+<style>
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 2rem;
+        min-height: 80vh;
+    }
+
+    .sidebar {
+        background: var(--bg-dark-secondary);
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid #333;
+    }
+
+    .user-info {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #333;
+    }
+
+    .role-badge {
+        background: var(--accent);
+        color: #000;
+        display: inline-block;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+    }
+
+    .side-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .side-nav a {
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    .side-nav a.active,
+    .side-nav a:hover {
+        background: rgba(245, 176, 38, 0.1);
+        color: var(--accent);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .stat-card {
+        background: var(--bg-dark-secondary);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #333;
+        text-align: center;
+    }
+
+    .stat-card h4 {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: var(--accent);
+    }
+
+    .stat-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .content-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(5px);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .content-card h3 {
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .progress-item,
+    .booking-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid #333;
+        font-size: 0.9rem;
+    }
+
+    .progress-item:last-child,
+    .booking-item:last-child {
+        border-bottom: none;
+    }
+
+    .available-classes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .class-card {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #444;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .class-info h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .class-info p {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .btn-book,
+    .btn-small {
+        background: var(--accent);
+        color: #000;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-book:hover,
+    .btn-small:hover {
+        transform: scale(1.05);
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: var(--bg-dark-secondary);
+        margin: 5vh auto;
+        padding: 2rem;
+        border: 1px solid var(--accent);
+        width: 400px;
+        max-width: 90%;
+        border-radius: 15px;
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        right: 1.5rem;
+        top: 1rem;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.8rem;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: #fff;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 1rem;
+        background: var(--accent);
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-container {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function showSection(sectionId, element) {
+        // Hide all sections
+        document.querySelectorAll('.dash-section').forEach(function (sec) {
+            sec.style.display = 'none';
+        });
+
+        // Show target section
+        document.getElementById('section-' + sectionId).style.display = 'block';
+
+        // Update active class on nav buttons
+        document.querySelectorAll('.nav-btn').forEach(function (btn) {
+            btn.classList.remove('active');
+        });
+        element.classList.add('active');
+    }
+
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'block';
+        }
+    }
+
+    function openPaymentModal(classId, classTitle) {
+        document.getElementById('payment-class-title').innerText = classTitle;
+        document.getElementById('paymentForm').action = "/book-class/" + classId + "/";
+        document.getElementById('paymentModal').style.display = 'block';
+    }
+
+    function closePaymentModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    // Close modal on outside click
+    window.onclick = function (event) {
+        if (event.target.className === 'modal') {
+            event.target.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

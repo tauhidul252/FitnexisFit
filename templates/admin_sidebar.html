@@ -1,0 +1,16 @@
+<aside class="sidebar">
+    <div class="user-info">
+        <h3>Admin Panel</h3>
+        <p class="role-badge">{{ request.user.profile.role }}</p>
+    </div>
+    <nav class="side-nav">
+        <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">Overview</a>
+        <a href="{% url 'manage_members' %}" class="{% if request.resolver_match.url_name == 'manage_members' %}active{% endif %}">Manage Members</a>
+        <a href="{% url 'manage_trainers' %}" class="{% if request.resolver_match.url_name == 'manage_trainers' %}active{% endif %}">Manage Trainers</a>
+        <a href="{% url 'manage_classes' %}" class="{% if request.resolver_match.url_name == 'manage_classes' %}active{% endif %}">Class Schedule</a>
+        <a href="{% url 'manage_payments' %}" class="{% if request.resolver_match.url_name == 'manage_payments' %}active{% endif %}">Payments</a>
+        <a href="{% url 'manage_plans' %}" class="{% if request.resolver_match.url_name == 'manage_plans' %}active{% endif %}">Membership Plans</a>
+        <a href="{% url 'manage_offers' %}" class="{% if request.resolver_match.url_name == 'manage_offers' %}active{% endif %}">Offers &amp; Discounts</a>
+        <a href="{% url 'manage_reports' %}" class="{% if request.resolver_match.url_name == 'manage_reports' %}active{% endif %}">Reports</a>
+    </nav>
+</aside>

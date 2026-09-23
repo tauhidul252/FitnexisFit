@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark animate-fade" style="padding-top: 120px; min-height: 100vh; display: flex; align-items: center;">
+    <div class="container" style="max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="glass-card" style="padding: 2rem !important; max-width: 700px; margin: 0 auto;">
+            <div class="section-header-center" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.3rem;">Payment Method</h2>
+                <p class="header-desc" style="font-size: 0.8rem;">
+                    Plan: <span class="highlight fw-bold">{{ plan.title }}</span> | 
+                    {% if discount > 0 %}
+                        Price: <span style="text-decoration: line-through; color: #888;">BDT {{ plan.price }}</span> 
+                        <span class="highlight fw-bold">BDT {{ final_price }}</span>
+                    {% else %}
+                        Amount: <span class="highlight fw-bold">BDT {{ plan.price }}</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            {% if selected_class %}
+            <div style="background: rgba(245,176,38,0.08); border: 1px solid rgba(245,176,38,0.3); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-check-circle" style="color: #22c55e; font-size: 1.2rem;"></i>
+                <div>
+                    <p style="margin: 0; font-size: 0.85rem; font-weight: 700;">Class Selected: {{ selected_class.title }}</p>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">
+                        <i class="fas fa-calendar-alt me-1"></i>{{ selected_class.schedule_time|date:"D, M d, Y @ g:i A" }}
+                    </p>
+                </div>
+                <a href="{% url 'select_class' plan.id %}" style="margin-left: auto; font-size: 0.75rem; color: #ff6666;">Change &rarr;</a>
+            </div>
+            {% endif %}
+
+            <!-- Messages -->
+            {% if messages %}
+                <div style="margin-bottom: 1.5rem;">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}" style="font-size: 0.85rem; border-radius: 8px;">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Promo Code Form -->
+            <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 1.2rem; border-radius: 12px; border: 1px dashed #444;">
+                {% if applied_offer %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="color: #22c55e; font-size: 0.9rem; font-weight: bold;"><i class="fas fa-check-circle me-1"></i> Coupon Applied: {{ promo_code }}</span>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0;">{{ applied_offer.discount_percentage }}% discount applied</p>
+                    </div>
+                    <a href="{% url 'initiate_payment' plan.id %}" class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; color: #ff6666; border-color: #ff6666; text-decoration: none;">Remove</a>
+                </div>
+                {% else %}
+                <form method="GET" style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                    <div style="flex-grow: 1;">
+                        <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.4rem;">Have a Promo Code?</label>
+                        <input type="text" name="promo_code" value="{{ promo_code|default:'' }}" placeholder="ENTER CODE" style="width: 100%; background: #111; border: 1px solid #333; color: #fff; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.9rem; outline: none;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.85rem; height: 38px;">Apply</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- Online -->
+                <div class="method-option transition" style="border: 1px solid #333; border-radius: 12px; background: rgba(255,255,255,0.02); padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div class="icon-circle" style="margin-bottom: 1.5rem; width: 60px; height: 60px; font-size: 1.5rem;">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; width: 100%;">Online Payment</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2rem; width: 100%;">Bkash, Nagad, Card</p>
+                    <a href="{% url 'online_payment' plan.id %}?{% if promo_code %}promo_code={{ promo_code }}&{% endif %}{% if class_id %}class_id={{ class_id }}{% endif %}" class="btn-primary" style="width: 100%; text-align: center; padding: 0.6rem; font-size: 0.85rem;">Proceed Online</a>
+                </div>
+
+                <!-- Offline -->
+                <div class="method-option transition" style="border: 1px solid #333; border-radius: 12px; background: rgba(255,255,255,0.02); padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div class="icon-circle" style="margin-bottom: 1.5rem; width: 60px; height: 60px; font-size: 1.5rem; border-color: #555; color: #fff;">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; width: 100%;">Bank Transfer</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2rem; width: 100%;">Manual verification</p>
+                    <a href="{% url 'offline_payment' plan.id %}?{% if promo_code %}promo_code={{ promo_code }}&{% endif %}{% if class_id %}class_id={{ class_id }}{% endif %}" class="btn-outline" style="width: 100%; text-align: center; padding: 0.6rem; font-size: 0.85rem;">Pay Offline</a>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem; border-top: 1px solid #333; padding-top: 1.5rem;">
+                <a href="{% url 'membership_plans' %}" style="color: var(--text-muted); font-size: 0.8rem;"><i class="fas fa-arrow-left me-2"></i> Back to Plans</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .method-option:hover { border-color: var(--accent) !important; background: rgba(245, 176, 38, 0.05) !important; transform: scale(1.02); }
+    .transition { transition: all 0.3s ease; }
+</style>
+{% endblock %}

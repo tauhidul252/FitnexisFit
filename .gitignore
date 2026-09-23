@@ -1,0 +1,17 @@
+# Python/Django
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+*.sqlite3
+
+# Local/IDE
+.vscode/
+.idea/
+
+# Extracted Figma files and archives
+extracted_site/
+Fitnexis.site
+Fitnexis.zip
+*.fig

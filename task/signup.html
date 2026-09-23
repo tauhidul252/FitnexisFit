@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITNEXIS GYM CLUB - Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="home.html" class="logo-container">
+            <h1 class="logo-text">FITNEXIS</h1>
+            <p class="logo-subtext">G Y M &nbsp;&nbsp; C L U B</p>
+        </a>
+        <button class="mobile-menu-btn" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="home.html#about">ABOUT</a></li>
+            <li><a href="home.html#classes">CLASSES</a></li>
+            <li><a href="home.html#schedule">SCHEDULE</a></li>
+            <li><a href="home.html#blogs">BLOG</a></li>
+            <li><a href="home.html#contact">CONTACT</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-outline">LOGIN</a>
+            <a href="signup.html" class="btn-primary">SIGN UP</a>
+        </div>
+    </nav>
+    <main>
+        <section class="auth-section">
+            <div class="auth-card">
+                <h2>SIGN<span class="highlight">UP</span></h2>
+                <form class="auth-form" action="#">
+                    <div class="form-group">
+                        <input type="text" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Email Address" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <select name="role" required style="width: 100%; padding: 1rem; background: var(--bg-dark); border: 1px solid #333; color: var(--text-white); border-radius: 4px; font-family: var(--font-body);">
+                            <option value="" disabled selected>Select Role</option>
+                            <option value="member">Member</option>
+                            <option value="trainer">Trainer</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-primary full-width">SIGN UP</button>
+                </form>
+                <p class="auth-footer">Already have an account? <a href="login.html" class="highlight">Login</a></p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col brand-col">
+                <a href="home.html" style="text-decoration: none; display: block; margin-bottom: 1rem;">
+                    <h1 class="logo-text" style="color: white; margin-bottom:0;">FITNEXIS</h1>
+                    <p class="logo-subtext" style="color: var(--text-muted); margin-bottom: 0;">G Y M &nbsp;&nbsp; C L U B</p>
+                </a>
+                <div class="social-icons">
+                    <span class="icon">IG</span>
+                    <span class="icon">FB</span>
+                    <span class="icon">TW</span>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>About Us</h3>
+                <a href="#">Company Profile</a>
+                <a href="#">Our Management</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <h3>Useful Links</h3>
+                <a href="#">Blogs</a>
+                <a href="#">Class Schedule</a>
+                <a href="#">Testimonial</a>
+                <a href="#">Payment Methods</a>
+            </div>
+            <div class="footer-col">
+                <h3>Support</h3>
+                <a href="#">Contact Us</a>
+                <a href="#">Support Center</a>
+                <a href="#">FAQ</a>
+            </div>
+        </div>
+        <div class="footer-newsletter">
+            <form class="newsletter-form">
+                <input type="email" placeholder="EMAIL HERE">
+                <button type="button" class="btn-primary">SEND</button>
+            </form>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; All rights reserved | 2026</p>
+        </div>
+    </footer>
+    <script>
+        function toggleMenu() {
+            document.querySelector('.nav-links').classList.toggle('active');
+            document.querySelector('.nav-actions').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

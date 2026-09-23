@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <h2>SIGN<span class="highlight">UP</span></h2>
+        <form class="auth-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Username" required value="{{ form.username.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <input type="email" name="email" placeholder="Email Address" required value="{{ form.email.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="form-group">
+                <select name="role" required style="width: 100%; padding: 1rem; background: var(--bg-dark); border: 1px solid #333; color: var(--text-white); border-radius: 4px;">
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="member">Member</option>
+                    <option value="trainer">Trainer</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary full-width">SIGN UP</button>
+        </form>
+        <p class="auth-footer">Already have an account? <a href="{% url 'login' %}" class="highlight">Login</a></p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark animate-fade" style="padding-top: 120px; min-height: 100vh;">
+    <div class="section-header-center">
+        <h2 class="highlight">Choose Your Plan</h2>
+        <p class="header-desc">Select a membership plan to unlock all features and start your fitness journey with Fitnexis.</p>
+    </div>
+
+    <div class="class-grid" style="max-width: 1000px; margin: 0 auto; gap: 1.5rem;">
+        {% for plan in plans %}
+        <div class="glass-card hover-glow transition" style="padding: 1.5rem !important; display: flex; flex-direction: column; gap: 1rem; text-align: center; align-items: center;">
+            <div style="width: 100%;">
+                <span class="hero-small-yellow" style="display: block; margin-bottom: 0.2rem; font-size: 0.7rem;">FITNEXIS PRO</span>
+                <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">{{ plan.title }}</h3>
+            </div>
+            
+            <div class="price-box" style="padding: 1rem; width: 100%;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: var(--accent);">BDT {{ plan.price }}</span>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">/ {{ plan.duration_months }} {{ plan.get_duration_unit_display }}</p>
+            </div>
+
+            <div style="flex-grow: 1; width: 100%;">
+                <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 1rem; line-height: 1.4;">{{ plan.description }}</p>
+                
+                <ul style="list-style: none; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; font-size: 0.85rem;">
+                    <li><i class="fas fa-check-circle" style="color: var(--accent); margin-right: 8px;"></i> Full Gym Access</li>
+                    <li><i class="fas fa-check-circle" style="color: var(--accent); margin-right: 8px;"></i> 24/7 Priority Support</li>
+                    <li><i class="fas fa-check-circle" style="color: var(--accent); margin-right: 8px;"></i> Progress Tracking</li>
+                </ul>
+            </div>
+
+            {% if active_sub and active_sub.plan == plan %}
+                <button class="btn-primary" style="opacity: 0.7; cursor: default; width: 100%; padding: 0.5rem; font-size: 0.8rem;">Current Plan</button>
+            {% else %}
+                {% if plan.has_trainer_access %}
+                    <a href="{% url 'select_trainer' plan.id %}" class="btn-primary" style="width: 100%; text-align: center; padding: 0.5rem; font-size: 0.8rem;">Choose Trainer & Book</a>
+                {% else %}
+                    <a href="{% url 'initiate_payment' plan.id %}" class="btn-primary" style="width: 100%; text-align: center; padding: 0.5rem; font-size: 0.8rem;">Get Started</a>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<style>
+    .transition { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .glass-card:hover { transform: translateY(-15px); background: rgba(255, 255, 255, 0.08); }
+    .price-box { background: rgba(245, 176, 38, 0.05); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(245, 176, 38, 0.1); }
+</style>
+{% endblock %}

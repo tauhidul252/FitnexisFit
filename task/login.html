@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITNEXIS GYM CLUB - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .demo-access {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed #444;
+            text-align: left;
+        }
+        .demo-access h3 {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .demo-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .demo-item strong {
+            color: var(--text-white);
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="home.html" class="logo-container">
+            <h1 class="logo-text">FITNEXIS</h1>
+            <p class="logo-subtext">G Y M &nbsp;&nbsp; C L U B</p>
+        </a>
+        <button class="mobile-menu-btn" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="home.html#about">ABOUT</a></li>
+            <li><a href="home.html#classes">CLASSES</a></li>
+            <li><a href="home.html#schedule">SCHEDULE</a></li>
+            <li><a href="home.html#blogs">BLOG</a></li>
+            <li><a href="home.html#contact">CONTACT</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-outline">LOGIN</a>
+            <a href="signup.html" class="btn-primary">SIGN UP</a>
+        </div>
+    </nav>
+    <main>
+        <section class="auth-section">
+            <div class="auth-card">
+                <h2>LOG<span class="highlight">IN</span></h2>
+                <form class="auth-form" action="#">
+                    <div class="form-group">
+                        <input type="text" name="username" placeholder="Username or Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="form-options">
+                        <label><input type="checkbox"> Remember me</label>
+                        <a href="#" class="forgot-link">Forgot Password?</a>
+                    </div>
+                    <button type="button" class="btn-primary full-width">LOGIN</button>
+                </form>
+                <p class="auth-footer">Don't have an account? <a href="signup.html" class="highlight">Sign Up</a></p>
+                
+                <div class="demo-access">
+                    <h3>DEMO ACCESS (Click to Auto-fill)</h3>
+                    <div class="demo-grid">
+                        <div class="demo-item" onclick="autoFill('admin', 'admin123')" style="cursor: pointer;">
+                            <strong>Admin:</strong> admin / admin123
+                        </div>
+                        <div class="demo-item" onclick="autoFill('trainer1', 'trainer123')" style="cursor: pointer;">
+                            <strong>Trainer:</strong> trainer1 / trainer123
+                        </div>
+                        <div class="demo-item" onclick="autoFill('member1', 'member123')" style="cursor: pointer;">
+                            <strong>Member:</strong> member1 / member123
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <script>
+            function autoFill(user, pass) {
+                document.getElementsByName('username')[0].value = user;
+                document.getElementsByName('password')[0].value = pass;
+            }
+        </script>
+    </main>
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col brand-col">
+                <a href="home.html" style="text-decoration: none; display: block; margin-bottom: 1rem;">
+                    <h1 class="logo-text" style="color: white; margin-bottom:0;">FITNEXIS</h1>
+                    <p class="logo-subtext" style="color: var(--text-muted); margin-bottom: 0;">G Y M &nbsp;&nbsp; C L U B</p>
+                </a>
+                <div class="social-icons">
+                    <span class="icon">IG</span>
+                    <span class="icon">FB</span>
+                    <span class="icon">TW</span>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>About Us</h3>
+                <a href="#">Company Profile</a>
+                <a href="#">Our Management</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <h3>Useful Links</h3>
+                <a href="#">Blogs</a>
+                <a href="#">Class Schedule</a>
+                <a href="#">Testimonial</a>
+                <a href="#">Payment Methods</a>
+            </div>
+            <div class="footer-col">
+                <h3>Support</h3>
+                <a href="#">Contact Us</a>
+                <a href="#">Support Center</a>
+                <a href="#">FAQ</a>
+            </div>
+        </div>
+        <div class="footer-newsletter">
+            <form class="newsletter-form">
+                <input type="email" placeholder="EMAIL HERE">
+                <button type="button" class="btn-primary">SEND</button>
+            </form>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; All rights reserved | 2026</p>
+        </div>
+    </footer>
+    <script>
+        function toggleMenu() {
+            document.querySelector('.nav-links').classList.toggle('active');
+            document.querySelector('.nav-actions').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

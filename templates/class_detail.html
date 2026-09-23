@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark" style="padding-top: 100px; min-height: 80vh;">
+    <div style="max-width: 1000px; margin: 0 auto; padding: 0 1rem;">
+
+        <!-- Back Button -->
+        <a href="{% url 'home' %}#classes" class="btn-details" style="margin-bottom: 2rem; display: inline-block;">&larr; Back to Classes</a>
+
+        <div class="class-detail-grid">
+            <!-- Image Panel -->
+            <div class="class-detail-img-wrap">
+                {% if gym_class.image %}
+                    <img src="{{ gym_class.image.url }}" alt="{{ gym_class.title }}" class="class-detail-img">
+                {% else %}
+                    <img src="{% static 'images/class_crossfit.png' %}" alt="{{ gym_class.title }}" class="class-detail-img">
+                {% endif %}
+            </div>
+
+            <!-- Info Panel -->
+            <div class="class-detail-info glass-card" style="padding: 2.5rem;">
+                <h1 class="highlight" style="font-size: 2.2rem; margin-bottom: 0.5rem;">{{ gym_class.title|upper }}</h1>
+
+                <div class="class-meta-row" style="justify-content: flex-start; margin-bottom: 1.5rem;">
+                    <span class="class-duration-badge">&#9201; {{ gym_class.duration_minutes }} min</span>
+                    <span class="class-duration-badge" style="background:rgba(255,255,255,0.08); border-color:#444; color:#ccc;">
+                        &#127947; {{ gym_class.trainer.get_full_name|default:gym_class.trainer.username|capfirst }}
+                    </span>
+                    <span class="class-duration-badge" style="background:rgba(255,255,255,0.08); border-color:#444; color:#ccc;">
+                        &#128197; {{ gym_class.schedule_time|date:"M d, Y" }}
+                    </span>
+                    <span class="class-duration-badge" style="background:rgba(255,255,255,0.08); border-color:#444; color:#ccc;">
+                        &#128336; {{ gym_class.schedule_time|date:"g:i A" }}
+                    </span>
+                </div>
+
+                <div style="border-top: 1px solid #2a2a2a; padding-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--accent); font-size: 1rem; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">About This Class</h3>
+                    <p style="color: #bbb; line-height: 1.8; font-size: 0.95rem;">
+                        {{ gym_class.description|default:"No description has been added for this class yet. Contact the trainer for more details." }}
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                    <div class="detail-stat-box">
+                        <p class="detail-stat-label">Capacity</p>
+                        <p class="detail-stat-value">{{ gym_class.capacity }} spots</p>
+                    </div>
+                    <div class="detail-stat-box">
+                        <p class="detail-stat-label">Spots Remaining</p>
+                        <p class="detail-stat-value {% if spots_left == 0 %}text-danger{% endif %}">
+                            {% if spots_left > 0 %}{{ spots_left }} left{% else %}Full{% endif %}
+                        </p>
+                    </div>
+                    <div class="detail-stat-box">
+                        <p class="detail-stat-label">Duration</p>
+                        <p class="detail-stat-value">{{ gym_class.duration_minutes }} minutes</p>
+                    </div>
+                    <div class="detail-stat-box">
+                        <p class="detail-stat-label">Booked</p>
+                        <p class="detail-stat-value">{{ booking_count }} members</p>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    {% if spots_left > 0 %}
+                        <a href="{% url 'book_class' gym_class.id %}" class="btn-primary" style="display:block; text-align:center; padding:1rem; font-size:1rem;">
+                            &#9889; Book This Class
+                        </a>
+                    {% else %}
+                        <button disabled class="btn-primary" style="display:block; width:100%; padding:1rem; font-size:1rem; opacity:0.5; cursor:not-allowed;">
+                            Class Full
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn-primary" style="display:block; text-align:center; padding:1rem; font-size:1rem;">
+                        Login to Book This Class
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .class-detail-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 0.9fr;
+        gap: 2.5rem;
+        align-items: start;
+        margin-top: 2rem;
+    }
+    .class-detail-img-wrap {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        border: 1px solid #2a2a2a;
+    }
+    .class-detail-img {
+        width: 100%;
+        height: 600px;
+        object-fit: contain;
+        display: block;
+        background: #000;
+    }
+    .class-detail-info {
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.07);
+    }
+    .detail-stat-box {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .detail-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.4rem;
+    }
+    .detail-stat-value {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--accent);
+    }
+    .text-danger { color: #e74c3c !important; }
+
+    @media (max-width: 768px) {
+        .class-detail-grid { grid-template-columns: 1fr; }
+        .class-detail-img { height: 350px; }
+    }
+</style>
+{% endblock %}

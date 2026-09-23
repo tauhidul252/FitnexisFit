@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark" style="padding-top:100px;min-height:100vh;">
+  <div class="dashboard-container">
+    {% include 'admin_sidebar.html' %}
+
+    <div class="dashboard-main">
+
+  <div class="pg-header">
+    <div>
+      <h2 class="pg-title">📋 Membership Plans</h2>
+      <p class="pg-sub">Create, edit and manage subscription plans</p>
+    </div>
+    <div class="pg-header-actions">
+      <a href="{% url 'admin_dashboard' %}" class="btn-outline-sm">← Dashboard</a>
+      <button onclick="openModal('addPlanModal')" class="btn-accent">+ New Plan</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box"><span class="sbox-icon">📋</span><strong>{{ total_plans }}</strong><small>Total Plans</small></div>
+    <div class="stat-box accent"><span class="sbox-icon">✅</span><strong>{{ total_subs }}</strong><small>Active Subscriptions</small></div>
+  </div>
+
+  {% if messages %}{% for msg in messages %}<div class="flash-msg {{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+
+  <!-- Plans Grid -->
+  <div class="plans-grid">
+    {% for plan in plans %}
+    <div class="plan-card {% if plan.title == 'Elite' %}plan-elite{% elif plan.title == 'Pro' %}plan-pro{% endif %}">
+      <div class="plan-card-top">
+        <div>
+          <h3 class="plan-title">{{ plan.title }}</h3>
+          <p class="plan-desc">{{ plan.description }}</p>
+        </div>
+        <div class="plan-card-actions">
+          <button onclick="openEditPlan('{{ plan.id }}','{{ plan.title }}','{{ plan.description }}','{{ plan.price }}','{{ plan.duration_months }}','{{ plan.duration_unit }}',{{ plan.has_trainer_access|yesno:'true,false' }})" class="btn-icon edit"><i class="fa-solid fa-pen"></i></button>
+          <a href="javascript:void(0)" onclick="showDeleteConfirm('{% url 'delete_plan' plan.id %}','Delete plan &quot;{{ plan.title }}&quot;?')" class="btn-icon del"><i class="fa-solid fa-trash"></i></a>
+        </div>
+      </div>
+      <div class="plan-price-row">
+        <span class="plan-price">${{ plan.price }}</span>
+        <span class="plan-duration">/ {{ plan.duration_months }} {{ plan.get_duration_unit_display }}</span>
+      </div>
+      {% if plan.has_trainer_access %}
+      <div style="font-size:0.75rem; color: var(--accent); margin-bottom: 0.3rem;">
+        <i class="fas fa-user-tie me-1"></i> Trainer Access Included
+      </div>
+      {% endif %}
+      <div class="plan-sub-count">
+        <i class="fa-solid fa-users"></i> {{ plan.subscriber_count }} subscriber{% if plan.subscriber_count != 1 %}s{% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <p style="font-size:3rem;">📋</p>
+      <p>No plans yet. Create your first plan!</p>
+    </div>
+    {% endfor %}
+  </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD PLAN MODAL -->
+<div id="addPlanModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addPlanModal')">×</button>
+    <h3>➕ Create New Plan</h3>
+    <form action="{% url 'add_plan' %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label>Plan Title *</label><input type="text" name="title" required placeholder="e.g. Elite"></div>
+      <div class="form-group"><label>Description *</label><textarea name="description" rows="2" placeholder="What's included?"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Price ($) *</label><input type="number" step="0.01" name="price" required></div>
+        <div class="form-group"><label>Duration</label>
+          <div style="display:flex;gap:5px;">
+            <input type="number" name="duration_months" value="1" min="1" style="flex:1;">
+            <select name="duration_unit" style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:0.7rem;">
+              <option value="days">Days</option>
+              <option value="months" selected>Months</option>
+              <option value="years">Years</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer;">
+          <input type="checkbox" name="has_trainer_access" id="add_trainer_access" style="width:18px; height:18px; accent-color: var(--accent);">
+          <span>Include Trainer Access <small style="color:#888;">(Member can choose any trainer)</small></span>
+        </label>
+      </div>
+      <button type="submit" class="btn-accent" style="width:100%;">Create Plan</button>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT PLAN MODAL -->
+<div id="editPlanModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('editPlanModal')">×</button>
+    <h3>✏️ Edit Plan</h3>
+    <form id="editPlanForm" method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label>Plan Title *</label><input type="text" name="title" id="ep_title" required></div>
+      <div class="form-group"><label>Description</label><textarea name="description" id="ep_desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Price ($) *</label><input type="number" step="0.01" name="price" id="ep_price" required></div>
+        <div class="form-group"><label>Duration</label>
+          <div style="display:flex;gap:5px;">
+            <input type="number" name="duration_months" id="ep_duration" min="1" style="flex:1;">
+            <select name="duration_unit" id="ep_unit" style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;padding:0.7rem;">
+              <option value="days">Days</option>
+              <option value="months">Months</option>
+              <option value="years">Years</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer;">
+          <input type="checkbox" name="has_trainer_access" id="ep_trainer_access" style="width:18px; height:18px; accent-color: var(--accent);">
+          <span>Include Trainer Access <small style="color:#888;">(Member can choose any trainer)</small></span>
+        </label>
+      </div>
+      <button type="submit" class="btn-accent" style="width:100%;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .pg-wrap { max-width:1300px;margin:0 auto;padding:0 2rem 4rem; }
+  .pg-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem; }
+  .pg-title { font-size:2rem;font-weight:900;color:#fff; }
+  .pg-sub { color:#888;font-size:0.95rem;margin-top:0.2rem; }
+  .pg-header-actions { display:flex;gap:1rem; }
+  .btn-outline-sm { padding:0.6rem 1.2rem;border:1px solid #444;border-radius:8px;color:#ccc;font-weight:600;font-size:0.85rem;text-decoration:none; }
+  .btn-outline-sm:hover { border-color:var(--accent);color:var(--accent); }
+  .btn-accent { background:var(--accent);color:#000;padding:0.6rem 1.4rem;border-radius:8px;font-weight:800;border:none;cursor:pointer; }
+
+  .stats-row { display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap; }
+  .stat-box { flex:1;min-width:160px;background:rgba(255,255,255,0.04);border:1px solid #2a2a2a;border-radius:12px;padding:1.2rem;display:flex;align-items:center;gap:0.8rem; }
+  .stat-box.accent { border-color:rgba(245,176,38,0.3); }
+  .sbox-icon { font-size:1.6rem; }
+  .stat-box strong { display:block;font-size:1.4rem;font-weight:900;color:var(--accent); }
+  .stat-box small { color:#888;font-size:0.75rem; }
+  .flash-msg { padding:0.8rem 1.2rem;border-radius:8px;margin-bottom:0.8rem;font-weight:600; }
+  .flash-msg.success { background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e; }
+  .flash-msg.error { background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.3);color:#ff6666; }
+
+  .plans-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem; }
+  .plan-card { background:rgba(255,255,255,0.03);border:1px solid #222;border-radius:12px;padding:1.2rem;transition:transform .2s; }
+  .plan-card:hover { transform:translateY(-3px); }
+  .plan-card.plan-pro { border-color:rgba(59,130,246,0.3);box-shadow:0 0 20px rgba(59,130,246,0.05); }
+  .plan-card.plan-elite { border-color:rgba(245,176,38,0.4);box-shadow:0 0 20px rgba(245,176,38,0.07); }
+  .plan-card-top { display:flex;justify-content:space-between;margin-bottom:1rem; }
+  .plan-title { font-size:1.1rem;font-weight:900;color:#fff;margin:0 0 0.2rem; }
+  .plan-desc { color:#888;font-size:0.75rem;margin:0; }
+  .plan-card-actions { display:flex;gap:0.4rem;flex-shrink:0; }
+  .btn-icon { width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all .2s; }
+  .btn-icon.edit { background:rgba(245,176,38,0.15);color:var(--accent); }
+  .btn-icon.edit:hover { background:rgba(245,176,38,0.3); }
+  .btn-icon.del { background:rgba(255,68,68,0.12);color:#ff6666;text-decoration:none; }
+  .btn-icon.del:hover { background:rgba(255,68,68,0.25); }
+  .plan-price-row { display:flex;align-items:baseline;gap:0.3rem;margin-bottom:0.5rem; }
+  .plan-price { font-size:1.6rem;font-weight:900;color:var(--accent); }
+  .plan-duration { color:#888;font-size:0.8rem; }
+  .plan-sub-count { color:#666;font-size:0.75rem; }
+  .empty-state { grid-column:1/-1;text-align:center;padding:4rem;color:#555; }
+
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal-box { background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:2rem;width:100%;max-width:480px;position:relative; }
+  .modal-box h3 { font-size:1.3rem;font-weight:800;margin-bottom:1.5rem;color:#fff; }
+  .modal-close { position:absolute;top:1rem;right:1.2rem;background:none;border:none;color:#666;font-size:1.5rem;cursor:pointer; }
+  .modal-close:hover { color:#fff; }
+  .form-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+  .form-group { margin-bottom:1rem; }
+  .form-group label { display:block;font-size:0.82rem;color:#888;margin-bottom:0.4rem;font-weight:600; }
+  .form-group input,.form-group textarea { width:100%;padding:0.7rem 0.9rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;resize:vertical; }
+  .form-group input:focus,.form-group textarea:focus { outline:none;border-color:var(--accent); }
+</style>
+
+<script>
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  window.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('active'); });
+
+  function openEditPlan(id, title, desc, price, duration, unit, hasTrainerAccess) {
+    document.getElementById('editPlanForm').action = `/edit-plan/${id}/`;
+    document.getElementById('ep_title').value    = title;
+    document.getElementById('ep_desc').value     = desc;
+    document.getElementById('ep_price').value    = price;
+    document.getElementById('ep_duration').value = duration;
+    document.getElementById('ep_unit').value     = unit || 'months';
+    document.getElementById('ep_trainer_access').checked = (hasTrainerAccess === true);
+    openModal('editPlanModal');
+  }
+
+</script>
+{% endblock %}

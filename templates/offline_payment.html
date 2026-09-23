@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-dark animate-fade" style="padding-top: 100px; min-height: 100vh; display: flex; align-items: center;">
+    <div class="container" style="max-width: 600px; margin: 0 auto; width: 100%;">
+        <div class="glass-card" style="padding: 2.5rem !important;">
+            <h2 class="highlight mb-3" style="font-size: 1.6rem;">Bank Transfer Details</h2>
+            
+            <div style="background: rgba(245, 176, 38, 0.1); border-left: 4px solid var(--accent); padding: 1rem; margin-bottom: 2rem; border-radius: 4px; font-size: 0.9rem;">
+                <p style="margin-bottom: 0.3rem;"><strong style="color: var(--accent);">Amount to Pay:</strong> <span style="font-size: 1.1rem; font-weight: 800;">BDT {{ final_price }}</span></p>
+                <p style="margin-bottom: 0.3rem;"><strong style="color: var(--accent);">Bank:</strong> Fitnexis Gym Bank Ltd.</p>
+                <p style="margin-bottom: 0.3rem;"><strong style="color: var(--accent);">Account No:</strong> 123-456-789-0</p>
+                <p style="margin-bottom: 0;"><strong style="color: var(--accent);">Branch:</strong> Dhaka Main Branch</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="auth-form" style="gap: 1rem;">
+                {% csrf_token %}
+                <div style="text-align: left; margin-bottom: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.3rem;">Your Bank Name</label>
+                    {{ form.bank_name }}
+                </div>
+                <div style="text-align: left; margin-bottom: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.3rem;">Account Number Used</label>
+                    {{ form.account_number }}
+                </div>
+                <div style="text-align: left; margin-bottom: 1.5rem;">
+                    <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.3rem;">Upload Deposit Slip</label>
+                    <div style="background: #121212; border: 1px solid #333; padding: 8px; border-radius: 4px;">
+                        {{ form.deposit_slip }}
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 0.7rem; cursor: pointer; font-size: 0.9rem;">Submit for Verification</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="{% url 'initiate_payment' plan.id %}" style="color: var(--text-muted); font-size: 0.8rem;">Cancel and use other method</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Ensure the Django form widgets match our style */
+    input[type="text"] {
+        width: 100%;
+        padding: 1rem;
+        background: #121212;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+    input[type="text"]:focus { border-color: var(--accent); outline: none; }
+</style>
+{% endblock %}

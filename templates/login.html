@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <h2>LOG<span class="highlight">IN</span></h2>
+        <form class="auth-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Username or Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="form-options">
+                <label><input type="checkbox"> Remember me</label>
+                <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
+            </div>
+            <button type="submit" class="btn-primary full-width">LOGIN</button>
+        </form>
+        <p class="auth-footer">Don't have an account? <a href="{% url 'signup' %}" class="highlight">Sign Up</a></p>
+        
+        <div class="demo-access">
+            <h3>DEMO ACCESS (Click to Auto-fill)</h3>
+            <div class="demo-grid">
+                <div class="demo-item" onclick="autoFill('admin', 'admin123')" style="cursor: pointer;">
+                    <strong>Admin:</strong> admin / admin123
+                </div>
+                <div class="demo-item" onclick="autoFill('trainer1', 'trainer123')" style="cursor: pointer;">
+                    <strong>Trainer:</strong> trainer1 / trainer123
+                </div>
+                <div class="demo-item" onclick="autoFill('member1', 'member123')" style="cursor: pointer;">
+                    <strong>Member:</strong> member1 / member123
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function autoFill(user, pass) {
+        document.getElementsByName('username')[0].value = user;
+        document.getElementsByName('password')[0].value = pass;
+    }
+</script>
+
+<style>
+    .demo-access {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px dashed #444;
+        text-align: left;
+    }
+    .demo-access h3 {
+        font-size: 0.9rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+        text-align: center;
+        letter-spacing: 2px;
+    }
+    .demo-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        background: rgba(0,0,0,0.2);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    .demo-item strong {
+        color: var(--text-white);
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}

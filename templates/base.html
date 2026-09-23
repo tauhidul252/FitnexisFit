@@ -1,0 +1,252 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITNEXIS GYM CLUB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.1">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="logo-container">
+            <h1 class="logo-text">FITNEXIS</h1>
+            <p class="logo-subtext">G Y M &nbsp;&nbsp; C L U B</p>
+        </a>
+
+        <!-- Hamburger Button -->
+        <button class="hamburger" id="hamburger" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <ul class="nav-links" id="navLinks">
+            <li><a href="{% url 'home' %}" onclick="closeMenu()">HOME</a></li>
+            <li><a href="#about" onclick="closeMenu()">ABOUT</a></li>
+            <li><a href="#classes" onclick="closeMenu()">CLASSES</a></li>
+            <li><a href="#schedule" onclick="closeMenu()">SCHEDULE</a></li>
+            <li><a href="#blogs" onclick="closeMenu()">BLOG</a></li>
+            <li><a href="#contact" onclick="closeMenu()">CONTACT</a></li>
+        </ul>
+        <div class="nav-actions" id="navActions">
+            {% if user.is_authenticated %}
+            <div class="user-profile-nav">
+                <a href="{% url 'dashboard' %}" class="profile-link-wrapper">
+                    <img src="{% if user.profile.profile_pic %}{{ user.profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=f5b026&color=000{% endif %}" alt="Profile" class="nav-avatar">
+                    <div class="user-info-wrapper">
+                        <span class="welcome-text">Welcome</span>
+                        <span class="user-name">{{ user.username|capfirst }}</span>
+                        <span class="view-profile-link">View Profile</span>
+                    </div>
+                </a>
+                <div class="profile-dropdown">
+                    <a href="{% url 'dashboard' %}" class="dropdown-item">Dashboard</a>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">Logout</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn-outline">LOGIN</a>
+            <a href="{% url 'signup' %}" class="btn-primary">SIGN UP</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer style="background-color: #1e1e1e; padding: 4rem 2rem; margin-top: 4rem;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 3rem;">
+            <!-- Left Column -->
+            <div style="flex: 1; min-width: 280px;">
+                <a href="{% url 'home' %}" style="text-decoration: none; display: block; margin-bottom: 0.5rem;">
+                    <h1 style="color: white; font-size: 2.8rem; font-weight: 900; letter-spacing: 1px; margin: 0; line-height: 1;">FITNEXIS</h1>
+                    <p style="color: #f5b026; margin: 0; font-weight: 800; letter-spacing: 8px; font-size: 0.8rem; padding-left: 2px;">G Y M &nbsp;C L U B</p>
+                </a>
+                <p style="color: #888; font-size: 0.95rem; margin-top: 1rem; margin-bottom: 2.5rem;">We are care about your health & body</p>
+                <div style="display: flex; gap: 1.2rem;">
+                    <a href="#" style="color: #888; font-size: 1.5rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'"><i class="fab fa-instagram"></i></a>
+                    <a href="#" style="color: #888; font-size: 1.5rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" style="color: #888; font-size: 1.5rem; transition: color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            
+            <!-- Right Columns Section -->
+            <div style="display: flex; flex-direction: column; gap: 2.5rem; align-items: flex-start; /* Default align */">
+                <!-- Right Columns -->
+                <div style="display: flex; gap: 4rem; flex-wrap: wrap;">
+                <!-- Column 1 -->
+                <div>
+                    <h4 style="color: #f5b026; margin-bottom: 1.5rem; font-weight: 600; font-size: 1.1rem;">Features</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Core features</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Pro experience</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Integrations</a></li>
+                    </ul>
+                </div>
+                <!-- Column 2 -->
+                <div>
+                    <h4 style="color: #f5b026; margin-bottom: 1.5rem; font-weight: 600; font-size: 1.1rem;">Learn more</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Blog</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Case studies</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Customer stories</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Best practices</a></li>
+                    </ul>
+                </div>
+                <!-- Column 3 -->
+                <div>
+                    <h4 style="color: #f5b026; margin-bottom: 1.5rem; font-weight: 600; font-size: 1.1rem;">Support</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem;">
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Contact</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Support</a></li>
+                        <li><a href="#" style="color: #bbb; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f5b026'" onmouseout="this.style.color='#bbb'">Legal</a></li>
+                    </ul>
+                </div>
+                </div>
+                
+                <!-- Newsletter Form -->
+                <div style="display: flex; width: 100%; max-width: 350px; align-self: flex-end;">
+                    <input type="email" placeholder="EMAIL HERE" style="flex: 1; padding: 0.8rem 1.2rem; border: none; outline: none; background: #fff; color: #333; font-weight: 600; font-family: 'Inter', sans-serif;">
+                    <button style="background: #f5b026; color: #000; border: none; padding: 0 1.5rem; font-weight: 800; cursor: pointer; transition: background 0.3s; font-family: 'Inter', sans-serif;" onmouseover="this.style.background='#e5a015'" onmouseout="this.style.background='#f5b026'">SEND</button>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; border-top: 1px solid #333; margin-top: 4rem; padding-top: 2rem; color: #666; font-size: 0.9rem;">
+            &copy; All rights reserved | 2026 FITNEXIS GYM CLUB
+        </div>
+    </footer>
+    <!-- Global Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-global">
+        <div class="modal-global-content">
+            <h3 id="deleteConfirmTitle">Confirm Delete</h3>
+            <p id="deleteConfirmMessage">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div class="modal-global-actions">
+                <button onclick="closeDeleteModal()" class="btn-secondary">CANCEL</button>
+                <a id="deleteConfirmBtn" href="#" class="btn-danger">DELETE</a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-global {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+        }
+        .modal-global-content {
+            background: #1a1a1c;
+            margin: 15% auto;
+            padding: 2.5rem;
+            border: 1px solid #ff4444;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(255, 68, 68, 0.1);
+        }
+        .modal-global-content h3 { color: #ff4444; margin-bottom: 1rem; font-size: 1.5rem; }
+        .modal-global-content p { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+        .modal-global-actions { display: flex; gap: 1rem; justify-content: center; }
+        .btn-secondary { background: transparent; border: 1px solid #444; color: #fff; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-danger { background: #ff4444; border: none; color: #fff; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700; text-decoration: none; }
+        .btn-secondary:hover { background: #333; }
+        .btn-danger:hover { background: #cc0000; }
+    </style>
+
+    <style>
+        /* ── Hamburger Button ── */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            z-index: 1001;
+        }
+        .hamburger span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        @media (max-width: 900px) {
+            .hamburger { display: flex; }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background: rgba(10,10,10,0.98);
+                padding: 1.5rem 2rem 2rem;
+                gap: 0;
+                z-index: 1000;
+                border-top: 1px solid #222;
+            }
+            .nav-links.open { display: flex; }
+            .nav-links li { border-bottom: 1px solid #222; }
+            .nav-links li a { display: block; padding: 1rem 0; font-size: 1rem; }
+            .nav-actions {
+                display: none;
+                flex-direction: column;
+                align-items: flex-start;
+                position: fixed;
+                top: auto;
+                left: 0;
+                width: 100%;
+                background: rgba(10,10,10,0.98);
+                padding: 1rem 2rem 2rem;
+                z-index: 1000;
+            }
+            .nav-actions.open { display: flex; }
+        }
+    </style>
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        const navActions = document.getElementById('navActions');
+
+        hamburger.addEventListener('click', function() {
+            hamburger.classList.toggle('open');
+            navLinks.classList.toggle('open');
+            navActions.classList.toggle('open');
+        });
+
+        function closeMenu() {
+            hamburger.classList.remove('open');
+            navLinks.classList.remove('open');
+            navActions.classList.remove('open');
+        }
+
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            if (!hamburger.contains(e.target) && !navLinks.contains(e.target) && !navActions.contains(e.target)) {
+                closeMenu();
+            }
+        });
+    </script>
+</body>
+</html>
+

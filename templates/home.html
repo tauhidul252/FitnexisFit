@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section id="home" class="hero" style="background-image: linear-gradient(rgba(15, 15, 17, 0.4), rgba(15, 15, 17, 0.7)), url('{% static 'images/hero_banner.png' %}');">
+    <div class="hero-content">
+        <p class="hero-small-yellow">YOUR BODY DESERVES BEST</p>
+        <h1 class="hero-title">Personalized Wellness for<br>Real Results</h1>
+        <a href="#about" class="btn-primary">Read More &rarr;</a>
+    </div>
+    <div class="hero-arrow-right">
+        <span>&gt;</span>
+    </div>
+</section>
+
+<!-- About Us (White) -->
+<section id="about" class="about section-white">
+    <div class="about-grid">
+        <div class="about-text">
+            <h2><span class="highlight">ABOUT</span> US</h2>
+            <p>The gym is very important for maintaining our health. It helps us stay physically fit, build strength, reduce stress, and improve overall well-being.</p>
+            <a href="#" class="btn-learn-more">LEARN MORE <span class="arrow-icon">&#10230;</span></a>
+        </div>
+        <div class="about-image-wrapper">
+            <img src="{% static 'images/about_gym.png' %}" alt="About Us - Fitness Training" class="about-img">
+            <div class="play-button">
+                <div class="play-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <polygon points="8,5 19,12 8,19"/>
+                    </svg>
+                </div>
+                <p>PLAY VIDEO</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Classes Specific (Dark) -->
+<section class="specific-classes section-dark">
+    <div class="specific-grid">
+        <div class="circular-image">
+            <img src="{% static 'images/class_crossfit.png' %}" alt="Classes">
+        </div>
+        <div class="specific-text">
+            <h2><span class="highlight">OUR</span> CLASSES</h2>
+            <h3 class="subtitle-outline">SPECIFIC CLASSES<br>WHAT YOU NEEDS</h3>
+            <p>The gym is very important for maintaining our health. It helps us to build strong, active, and healthy muscles. Regular exercise helps us stay fit and strong. Training your body brings more discipline and positive perspective in life.</p>
+            <a href="#" class="link-yellow">SEE ALL CLASSES &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Classes We Provide (Dark) -->
+<section id="classes" class="classes section-dark">
+    <div class="section-header-center">
+        <h2><span class="highlight">CLASSES</span> WE PROVIDE</h2>
+        <p class="header-desc">The classes you take provide value to your fitness and well being. Taking these classes regularly will help you in your daily life, reducing stress and promoting a healthy lifestyle.</p>
+    </div>
+    <div class="class-grid">
+        {% for class in classes %}
+        <div class="class-card">
+            {% if class.image %}
+                <img src="{{ class.image.url }}" class="card-img" alt="{{ class.title }}">
+            {% else %}
+                {% if 'yoga' in class.title|lower %}
+                    <img src="{% static 'images/d1.webp' %}" class="card-img" alt="{{ class.title }}">
+                {% elif forloop.counter0|divisibleby:5 %}
+                    <img src="{% static 'images/1.webp' %}" class="card-img" alt="{{ class.title }}">
+                {% elif forloop.counter0|divisibleby:4 %}
+                    <img src="{% static 'images/5 (1).webp' %}" class="card-img" alt="{{ class.title }}">
+                {% elif forloop.counter0|divisibleby:3 %}
+                    <img src="{% static 'images/6.webp' %}" class="card-img" alt="{{ class.title }}">
+                {% elif forloop.counter0|divisibleby:2 %}
+                    <img src="{% static 'images/8.webp' %}" class="card-img" alt="{{ class.title }}">
+                {% else %}
+                    <img src="{% static 'images/class_crossfit.png' %}" class="card-img" alt="{{ class.title }}">
+                {% endif %}
+            {% endif %}
+            <div class="card-content">
+                <h3 class="highlight">{{ class.title|upper }}</h3>
+                <div class="class-meta-row">
+                    <span class="class-duration-badge">&#9201; {{ class.duration_minutes }} min</span>
+                    <span class="class-trainer-badge">&#127947; {{ class.trainer.get_full_name|default:class.trainer.username|capfirst }}</span>
+                </div>
+                <p class="class-desc">{{ class.description|truncatewords:18|default:"Join this exciting fitness class and transform your body!" }}</p>
+                <div class="card-bottom-line"></div>
+                <a href="{% url 'class_detail' class.id %}" class="btn-details">Details &rarr;</a>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center; color: var(--text-muted); padding: 2rem;">No classes available at the moment.</p>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        <span>1</span> <span>/</span> <span class="active">2</span> <span>3</span> <span>&gt;</span>
+    </div>
+</section>
+
+<!-- Class Schedule (Dark) -->
+<section id="schedule" class="schedule section-dark">
+    <div class="section-header-center">
+        <h2><span class="highlight">CLASS</span> SCHEDULE</h2>
+        <p class="header-desc">The gym is very important for maintaining our health. It helps us build strong, active, and healthy muscles. The gym environment allows you to enjoy the benefits of a healthy lifestyle.</p>
+    </div>
+    <div class="schedule-table">
+        <div class="table-header">
+            <div>DAY</div>
+            <div>TIME</div>
+            <div>TRAINER</div>
+        </div>
+        {% for item in schedule %}
+        <div class="table-row">
+            <div>{{ item.schedule_time|date:"l"|upper }}</div>
+            <div>{{ item.schedule_time|date:"h:i A" }}</div>
+            <div>{{ item.trainer.username|upper }}</div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; padding: 1rem;">No classes scheduled.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Our Instructors (Dark) -->
+<section id="instructors" class="instructors section-dark">
+    <div class="section-header-center">
+        <h2 class="instructors-title"><span class="highlight">OUR</span> INSTRUCTORS</h2>
+        <p class="header-desc">We've very professional trainers. All the trainers are very skillful &amp; careful.</p>
+    </div>
+
+    {% if user.is_authenticated and user.profile.role == 'admin' %}
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <button onclick="document.getElementById('addTrainerModal').style.display='flex'" class="btn-primary" style="border-radius: 6px; padding: 0.7rem 2rem; font-size: 0.9rem;">
+            <i class="fas fa-plus" style="margin-right: 0.5rem;"></i> ADD TRAINER
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="instructor-grid">
+        {% for trainer in trainers %}
+        <div class="instructor-card-dark">
+            <div class="instructor-card-img-wrap">
+                <img src="{% if trainer.profile.profile_pic %}{{ trainer.profile.profile_pic.url }}{% else %}{% static 'images/instructor_1.png' %}{% endif %}" alt="{{ trainer.username }}">
+            </div>
+            <div class="trainer-info">
+                <h3>{{ trainer.username|upper }}</h3>
+                <p class="trainer-specialty">{{ trainer.profile.specialty|default:"Expert Trainer" }}</p>
+                <div class="trainer-social-rating">
+                    <div class="trainer-social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <span class="trainer-rating">|Rating <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span></span>
+                </div>
+
+                {% if user.is_authenticated and user.profile.role == 'admin' %}
+                <div class="trainer-admin-actions">
+                    <button onclick="openEditTrainerModal({{ trainer.id }}, '{{ trainer.username }}', '{{ trainer.email }}', '{{ trainer.first_name }}', '{{ trainer.last_name }}', '{{ trainer.profile.specialty|default:"" }}', '{{ trainer.profile.phone|default:"" }}', '{{ trainer.profile.bio|default:"" }}')" class="btn-edit-trainer" title="Edit">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button onclick="showDeleteConfirm('{% url 'delete_trainer' trainer.id %}?next={% url 'home' %}%23instructors', 'Delete trainer {{ trainer.username }}? This cannot be undone.')" class="btn-delete-trainer" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endif %}
+
+                <a href="#" class="btn-view-profile">VIEW PROFILE</a>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center; color: var(--text-muted); padding: 2rem; grid-column: 1 / -1;">Our trainers are busy preparing for you!</p>
+        {% endfor %}
+
+        <!-- Static Instructor 1 -->
+        <div class="instructor-card-dark">
+            <div class="instructor-card-img-wrap">
+                <img src="{% static 'images/instructor_1.png' %}" alt="Alex Johnson">
+            </div>
+            <div class="trainer-info">
+                <h3>lOPA JAHAN</h3>
+                <p class="trainer-specialty">Strength & Conditioning Coach</p>
+                <div class="trainer-social-rating">
+                    <div class="trainer-social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <span class="trainer-rating">|Rating <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span></span>
+                </div>
+                <a href="#" class="btn-view-profile">VIEW PROFILE</a>
+            </div>
+        </div>
+
+        <!-- Static Instructor 2 -->
+        <div class="instructor-card-dark">
+            <div class="instructor-card-img-wrap">
+                <img src="{% static 'images/instructor_1.png' %}" alt="Sarah Williams">
+            </div>
+            <div class="trainer-info">
+                <h3>SHIMANTO</h3>
+                <p class="trainer-specialty">Yoga & Flexibility Expert</p>
+                <div class="trainer-social-rating">
+                    <div class="trainer-social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <span class="trainer-rating">|Rating <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span></span>
+                </div>
+                <a href="#" class="btn-view-profile">VIEW PROFILE</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if user.is_authenticated and user.profile.role == 'admin' %}
+<!-- Add Trainer Modal -->
+<div id="addTrainerModal" class="trainer-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="trainer-modal">
+        <div class="trainer-modal-header">
+            <h3><i class="fas fa-user-plus" style="margin-right: 0.5rem;"></i> Add New Trainer</h3>
+            <button onclick="document.getElementById('addTrainerModal').style.display='none'" class="modal-close-btn">&times;</button>
+        </div>
+        <form action="{% url 'add_trainer' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'home' %}#instructors">
+            <div class="trainer-form-grid">
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" name="username" required placeholder="e.g. john_doe">
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" required placeholder="trainer@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" required placeholder="Set password">
+                </div>
+                <div class="form-group">
+                    <label>Specialty</label>
+                    <input type="text" name="specialty" placeholder="e.g. Cardio Trainer">
+                </div>
+                <div class="form-group full-span">
+                    <label>Bio</label>
+                    <textarea name="bio" rows="2" placeholder="Short bio..."></textarea>
+                </div>
+                <div class="form-group full-span">
+                    <label>Profile Photo</label>
+                    <input type="file" name="profile_pic" accept="image/*">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; border-radius: 6px; margin-top: 1rem; padding: 0.8rem; font-size: 1rem;">ADD TRAINER</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Trainer Modal -->
+<div id="editTrainerModal" class="trainer-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="trainer-modal">
+        <div class="trainer-modal-header">
+            <h3><i class="fas fa-user-edit" style="margin-right: 0.5rem;"></i> Edit Trainer</h3>
+            <button onclick="document.getElementById('editTrainerModal').style.display='none'" class="modal-close-btn">&times;</button>
+        </div>
+        <form id="editTrainerForm" action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'home' %}#instructors">
+            <div class="trainer-form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" id="editFirstName" placeholder="First name">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" id="editLastName" placeholder="Last name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" id="editEmail" placeholder="Email">
+                </div>
+                <div class="form-group">
+                    <label>Specialty</label>
+                    <input type="text" name="specialty" id="editSpecialty" placeholder="e.g. Bodybuilding Trainer">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" id="editPhone" placeholder="Phone">
+                </div>
+                <div class="form-group">
+                    <label>Profile Photo</label>
+                    <input type="file" name="profile_pic" accept="image/*">
+                </div>
+                <div class="form-group full-span">
+                    <label>Bio</label>
+                    <textarea name="bio" id="editBio" rows="2" placeholder="Short bio..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; border-radius: 6px; margin-top: 1rem; padding: 0.8rem; font-size: 1rem;">SAVE CHANGES</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditTrainerModal(id, username, email, firstName, lastName, specialty, phone, bio) {
+    document.getElementById('editTrainerForm').action = '/manage/trainers/edit/' + id + '/';
+    document.getElementById('editFirstName').value = firstName;
+    document.getElementById('editLastName').value = lastName;
+    document.getElementById('editEmail').value = email;
+    document.getElementById('editSpecialty').value = specialty;
+    document.getElementById('editPhone').value = phone;
+    document.getElementById('editBio').value = bio;
+    document.getElementById('editTrainerModal').style.display = 'flex';
+}
+</script>
+{% endif %}
+
+<!-- Our Blogs (Dark) -->
+<section id="blogs" class="blogs section-dark" style="background-color: #1e1e1e; padding: 5rem 2rem; color: #fff;">
+    <div class="section-header-center" style="text-align: center; margin-bottom: 4rem;">
+        <h2 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 4rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; line-height: 1.1;">
+            <span style="color: #f5b026;">OUR</span> <span style="color: #fff;">BLOGS</span>
+        </h2>
+        <p class="header-desc" style="color: #ccc; font-size: 1.1rem; max-width: 700px; margin: 1.5rem auto 0; font-family: 'Inter', sans-serif; font-weight: 300; line-height: 1.5;">
+            We have highly professional and experienced instructors who play a very important role in maintaining our health.
+        </p>
+    </div>
+    
+    <!-- Responsive Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; padding-bottom: 3rem;">
+        <!-- Card 1 -->
+        <div style="position: relative; height: 500px; border-radius: 12px; overflow: hidden; border: 1px solid #f5b026; background: url('{% static 'images/blog_mistakes.png' %}') no-repeat center center/cover; display: flex; flex-direction: column; justify-content: flex-end; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: transform 0.3s, box-shadow 0.3s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 30px rgba(245,176,38,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.5)';">
+            <!-- Overlay -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); z-index: 1;"></div>
+            
+            <!-- Content -->
+            <div style="position: relative; z-index: 2;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1.5rem; color: #fff; margin: 0 0 1rem 0; line-height: 1.3;">
+                    5 Common Gym Mistakes That Can Hinder Your Progress
+                </h3>
+                <p style="color: #bbb; font-size: 0.9rem; font-family: 'Inter', sans-serif; line-height: 1.5; margin: 0 0 1.5rem 0; border-bottom: 2px solid #f5b026; padding-bottom: 0.8rem;">
+                    Achieving your fitness goals isn't just about working out it's about combining smart training...
+                </p>
+                <a href="#" style="display: inline-block; background-color: #f5b026; color: #000; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.85rem; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px; text-transform: uppercase; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#e5a015'" onmouseout="this.style.backgroundColor='#f5b026'">VIEW</a>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div style="position: relative; height: 500px; border-radius: 12px; overflow: hidden; border: 1px solid #f5b026; background: url('{% static 'images/blog_ropes.png' %}') no-repeat center center/cover; display: flex; flex-direction: column; justify-content: flex-end; padding: 2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: transform 0.3s, box-shadow 0.3s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 30px rgba(245,176,38,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.5)';">
+            <!-- Overlay -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); z-index: 1;"></div>
+            
+            <!-- Content -->
+            <div style="position: relative; z-index: 2;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1.5rem; color: #fff; margin: 0 0 1rem 0; line-height: 1.3;">
+                    Strength vs Cardio: How to Balance Both for Optimal Fitness
+                </h3>
+                <p style="color: #bbb; font-size: 0.9rem; font-family: 'Inter', sans-serif; line-height: 1.5; margin: 0 0 1.5rem 0; border-bottom: 2px solid #f5b026; padding-bottom: 0.8rem;">
+                    Achieving your fitness goals isn't just about working out it's about combining smart training...
+                </p>
+                <a href="#" style="display: inline-block; background-color: #f5b026; color: #000; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.85rem; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px; text-transform: uppercase; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#e5a015'" onmouseout="this.style.backgroundColor='#f5b026'">VIEW</a>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div style="position: relative; height: 500px; border-radius: 12px; overflow: hidden; border: 3px solid #00a2ff; background: url('{% static 'images/blog_functional.png' %}') no-repeat center center/cover; display: flex; flex-direction: column; justify-content: flex-end; padding: 2rem; box-shadow: 0 15px 30px rgba(0,162,255,0.25); transition: transform 0.3s, box-shadow 0.3s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(0,162,255,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 15px 30px rgba(0,162,255,0.25)';">
+            <!-- Overlay -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); z-index: 1;"></div>
+            
+            <!-- Content -->
+            <div style="position: relative; z-index: 2;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1.5rem; color: #fff; margin: 0 0 1rem 0; line-height: 1.3;">
+                    Functional Training Explained: Why It Matters and How to Start Safely
+                </h3>
+                <p style="color: #bbb; font-size: 0.9rem; font-family: 'Inter', sans-serif; line-height: 1.5; margin: 0 0 1.5rem 0; border-bottom: 2px solid #f5b026; padding-bottom: 0.8rem;">
+                    Achieving your fitness goals isn't just about working out it's about combining smart training...
+                </p>
+                <a href="#" style="display: inline-block; background-color: #f5b026; color: #000; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.85rem; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px; text-transform: uppercase; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#e5a015'" onmouseout="this.style.backgroundColor='#f5b026'">VIEW</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination / Footer of Blogs Section -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; font-family: 'Outfit', sans-serif; font-size: 1.5rem;">
+        <span style="color: #f5b026; letter-spacing: 8px; font-weight: 600; cursor: pointer;">1 2 3....</span>
+        <a href="#" style="background-color: #f5b026; color: #000; font-size: 0.9rem; font-weight: 800; padding: 0.5rem 1.2rem; text-decoration: none; border-radius: 4px; text-transform: uppercase; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#e5a015'" onmouseout="this.style.backgroundColor='#f5b026'">MORE</a>
+    </div>
+</section>
+
+<!-- Contact Us (White) -->
+<section id="contact" class="contact section-white">
+    <div class="section-header-center" style="margin-bottom: 4rem;">
+        <h2 style="font-size: 3.5rem; letter-spacing: 1px;"><span class="highlight">CONTACT</span> US</h2>
+        <p class="header-desc" style="color: #000000; font-size: 1.25rem; font-weight: 500; line-height: 1.4; max-width: 650px; margin: 1.2rem auto 0; font-family: var(--font-body);">We have very professional and expert instructors<br>who are dedicated to helping you maintain your<br>health and fitness.</p>
+    </div>
+    
+    <div class="contact-info-row">
+        <div class="contact-icon-box">
+            <!-- Map Marker Icon with shadow oval base -->
+            <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#f5b026" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1.5rem;">
+                <path d="M12 2a6 6 0 0 0-6 6c0 4 6 10 6 10s6-6 6-6a6 6 0 0 0-6-6z" />
+                <circle cx="12" cy="8" r="2" />
+                <ellipse cx="12" cy="20" rx="4" ry="1.5" />
+                <ellipse cx="12" cy="22" rx="6" ry="1.5" />
+            </svg>
+            <p>304, Central Street Main Road<br>Dhaka, Bangladesh</p>
+        </div>
+        <div class="contact-icon-box">
+            <!-- Phone Book Icon -->
+            <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#f5b026" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1.5rem;">
+                <path d="M6 3h13a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6" />
+                <path d="M6 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2" />
+                <path d="M3 6h3M3 11h3M3 16h3" />
+                <path d="M9 8.5a1 1 0 0 1 .5-.9l1.8-1c.4-.2.9 0 1.1.4l.8 1.6c.2.4 0 .9-.4 1.1l-.8.4c-.2.1-.3.3-.2.5.6 1.2 1.6 2.2 2.8 2.8.2.1.4 0 .5-.2l.4-.8c.2-.4.7-.6 1.1-.4l1.6.8c.4.2.6.7.4 1.1l-1 1.8a1 1 0 0 1-.9.5 7.5 7.5 0 0 1-7.5-7.5z" />
+            </svg>
+            <p>01634155401<br>01887712696<br>01632359411</p>
+        </div>
+        <div class="contact-icon-box">
+            <!-- Globe Icon with continent outlines -->
+            <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#f5b026" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1.5rem;">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M7.5 6.5c1-1 3 .5 3.5 1.5s-1.5 3.5-3 3.5-1.5-1-1.5-2 0-2 1-3z" fill="#f5b026" fill-opacity="0.15" />
+                <path d="M8 12c.5 1 2 2.5 1.5 4.5s-2.5 2-2.5.5S8.5 11 8 12z" fill="#f5b026" fill-opacity="0.15" />
+                <path d="M13.5 6.5c1.5-.5 3.5.5 4.5 2s-1 3.5-2.5 3c-1.5-.5-1-2-1.5-2.5s-2-2-.5-2.5z" fill="#f5b026" fill-opacity="0.15" />
+                <path d="M17 15c.5-.5 1.5 0 1.5 1s-1 1-1.5.5-.5-1 0-1.5z" fill="#f5b026" fill-opacity="0.15" />
+            </svg>
+            <p>fitnexis.gymclub@gmail.com<br>www.fitnexis.com</p>
+        </div>
+    </div>
+
+    <div class="contact-main-grid">
+        <div class="contact-form-box">
+            <form onsubmit="event.preventDefault(); alert('Message sent successfully!'); this.reset();">
+                <div class="form-row">
+                    <input type="text" placeholder="NAME" required>
+                    <input type="email" placeholder="EMAIL" required>
+                </div>
+                <textarea placeholder="Write message here..." rows="6" required></textarea>
+                <button type="submit" class="btn-primary full-width">SEND MESSAGE</button>
+            </form>
+        </div>
+        <div class="contact-map-box">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3651.902442430139!2d90.3897482154316!3d23.750858094676575!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8a36c84c7e5%3A0xc3b83c74900a068e!2sDhaka!5e0!3m2!1sen!2sbd!4v1655183861214!5m2!1sen!2sbd" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}
