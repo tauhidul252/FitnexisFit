@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import models
@@ -178,7 +179,7 @@ def update_progress(request):
                 muscle_mass=muscle, notes=(request.POST.get('notes') or '').strip(),
             )
             messages.success(request, "Progress updated!")
-    return redirect('member_dashboard')
+    return redirect(reverse('member_dashboard') + '#progress')
 
 
 PROGRESS_RANGES = {'30': 30, '90': 90, '180': 180, '365': 365}
