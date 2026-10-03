@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import models
 from .models import Subscription, MembershipPlan, GymClass, Booking, Attendance, FitnessProgress, Payment, Offer
 import uuid
+from decimal import Decimal, InvalidOperation
 import json
 import requests
 from django.http import JsonResponse
@@ -146,14 +148,87 @@ def book_class(request, class_id):
         messages.error(request, "This class is full.")
     return redirect('member_dashboard')
 
+def _parse_metric(raw, field, low, high, required=False):
+    """Parse an optional decimal form value; return (value, error_message)."""
+    raw = (raw or '').strip()
+    if not raw:
+        return (None, f"{field} is required.") if required else (None, None)
+    try:
+        value = Decimal(raw)
+    except InvalidOperation:
+        return None, f"{field} must be a number."
+    if not value.is_finite() or not (low < value <= high):
+        return None, f"{field} must be between {low} and {high}."
+    return value.quantize(Decimal('0.01')), None
+
+
 @login_required
 def update_progress(request):
+    """Record a progress entry (weight required; body fat % and muscle mass optional)."""
     if request.method == 'POST':
-        weight = request.POST.get('weight')
-        notes = request.POST.get('notes')
-        FitnessProgress.objects.create(user=request.user, weight=weight, notes=notes)
-        messages.success(request, "Progress updated!")
-    return redirect('member_dashboard')
+        weight, err_w = _parse_metric(request.POST.get('weight'), "Weight", 0, 500, required=True)
+        body_fat, err_f = _parse_metric(request.POST.get('body_fat_percentage'), "Body fat %", 0, 100)
+        muscle, err_m = _parse_metric(request.POST.get('muscle_mass'), "Muscle mass", 0, 500)
+        errors = [e for e in (err_w, err_f, err_m) if e]
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            FitnessProgress.objects.create(
+                user=request.user, weight=weight, body_fat_percentage=body_fat,
+                muscle_mass=muscle, notes=(request.POST.get('notes') or '').strip(),
+            )
+            messages.success(request, "Progress updated!")
+    return redirect(reverse('member_dashboard') + '#progress')
+
+
+PROGRESS_RANGES = {'30': 30, '90': 90, '180': 180, '365': 365}
+
+
+@login_required
+def progress_data(request):
+    """JSON feed for the progress charts. ?range=30|90|180|365|all (default all)."""
+    entries = FitnessProgress.objects.filter(user=request.user)
+    range_key = request.GET.get('range', 'all')
+    if range_key in PROGRESS_RANGES:
+        since = timezone.now().date() - timedelta(days=PROGRESS_RANGES[range_key])
+        entries = entries.filter(date__gte=since)
+    else:
+        range_key = 'all'
+    entries = list(entries.order_by('date', 'id'))
+
+    def num(v):
+        return float(v) if v is not None else None
+
+    def summarize(values):
+        # Only entries that actually recorded this metric count toward it.
+        vals = [v for v in values if v is not None]
+        if not vals:
+            return None
+        return {
+            'first': vals[0], 'latest': vals[-1],
+            'change': round(vals[-1] - vals[0], 2),
+            'min': min(vals), 'max': max(vals),
+        }
+
+    weight = [num(e.weight) for e in entries]
+    body_fat = [num(e.body_fat_percentage) for e in entries]
+    muscle = [num(e.muscle_mass) for e in entries]
+    return JsonResponse({
+        'range': range_key,
+        'count': len(entries),
+        'labels': [e.date.isoformat() for e in entries],
+        # None becomes null so Chart.js leaves a gap instead of plotting 0.
+        'weight': weight,
+        'body_fat': body_fat,
+        'muscle_mass': muscle,
+        'notes': [e.notes for e in entries],
+        'summary': {
+            'weight': summarize(weight),
+            'body_fat': summarize(body_fat),
+            'muscle_mass': summarize(muscle),
+        },
+    })
 
 @login_required
 def cancel_booking(request, booking_id):

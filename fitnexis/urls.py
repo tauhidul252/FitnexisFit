@@ -9,7 +9,7 @@ from django.conf.urls.static import static
 from core.views import (
     home, login_view, signup_view, logout_view, forgot_password_view,
     dashboard, member_dashboard, trainer_dashboard, admin_dashboard,
-    error_404, book_class, update_progress, cancel_booking, mark_attendance, add_class,
+    error_404, book_class, update_progress, progress_data, cancel_booking, mark_attendance, add_class,
     add_plan, edit_plan, delete_plan,
     manage_members, add_member, edit_member, delete_member,
     manage_trainers, add_trainer, edit_trainer, delete_trainer,
@@ -37,6 +37,7 @@ urlpatterns = [
     path('book-class/<int:class_id>/', book_class, name='book_class'),
     path('cancel-booking/<int:booking_id>/', cancel_booking, name='cancel_booking'),
     path('update-progress/', update_progress, name='update_progress'),
+    path('progress/data/', progress_data, name='progress_data'),
     path('mark-attendance/<int:booking_id>/', mark_attendance, name='mark_attendance'),
     path('add-class/', add_class, name='add_class'),
     # Plans (legacy)
