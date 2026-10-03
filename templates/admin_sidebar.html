@@ -12,5 +12,6 @@
         <a href="{% url 'manage_plans' %}" class="{% if request.resolver_match.url_name == 'manage_plans' %}active{% endif %}">Membership Plans</a>
         <a href="{% url 'manage_offers' %}" class="{% if request.resolver_match.url_name == 'manage_offers' %}active{% endif %}">Offers &amp; Discounts</a>
         <a href="{% url 'manage_reports' %}" class="{% if request.resolver_match.url_name == 'manage_reports' %}active{% endif %}">Reports</a>
+        <a href="{% url 'account_settings' %}" class="{% if request.resolver_match.url_name == 'account_settings' %}active{% endif %}">Settings</a>
     </nav>
 </aside>

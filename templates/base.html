@@ -44,6 +44,7 @@
                 </a>
                 <div class="profile-dropdown">
                     <a href="{% url 'dashboard' %}" class="dropdown-item">Dashboard</a>
+                    <a href="{% url 'account_settings' %}" class="dropdown-item">Settings</a>
                     <form action="{% url 'logout' %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="dropdown-item">Logout</button>
