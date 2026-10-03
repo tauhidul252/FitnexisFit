@@ -230,6 +230,67 @@ def progress_data(request):
         },
     })
 
+def _week_start(d):
+    """Monday of the week containing date d."""
+    return d - timedelta(days=d.weekday())
+
+
+def compute_attendance_streaks(dates, today):
+    """Return (current, longest) streaks in weeks, given an iterable of visit dates.
+
+    A week counts if it has at least one visit. The current streak stays alive
+    while this week is still empty, as long as last week had a visit.
+    """
+    weeks = sorted({_week_start(d) for d in dates})
+    if not weeks:
+        return 0, 0
+    longest = run = 1
+    for prev, cur in zip(weeks, weeks[1:]):
+        run = run + 1 if cur - prev == timedelta(days=7) else 1
+        longest = max(longest, run)
+
+    this_week = _week_start(today)
+    last = weeks[-1]
+    if last < this_week - timedelta(days=7):
+        return 0, longest
+    current = 1
+    for prev in reversed(weeks[:-1]):
+        if last - prev != timedelta(days=7):
+            break
+        current, last = current + 1, prev
+    return current, longest
+
+
+@login_required
+def attendance_data(request):
+    """JSON feed for the attendance calendar. ?month=YYYY-MM (default: this month)."""
+    today = timezone.localdate()
+    year, month = today.year, today.month
+    raw = request.GET.get('month', '')
+    try:
+        y, m = raw.split('-')
+        if 1 <= int(m) <= 12 and 2000 <= int(y) <= 2100:
+            year, month = int(y), int(m)
+    except ValueError:
+        pass
+
+    visits = Attendance.objects.filter(user=request.user, is_present=True)
+    all_dates = sorted({v.date for v in visits.only('date')})
+    month_days = sorted({d.day for d in all_dates if d.year == year and d.month == month})
+    current, longest = compute_attendance_streaks(all_dates, today)
+    this_month = sum(1 for d in all_dates if d.year == today.year and d.month == today.month)
+    return JsonResponse({
+        'year': year, 'month': month,
+        'days': month_days,
+        'month_count': len(month_days),
+        'this_month_count': this_month,
+        'total': len(all_dates),
+        'current_streak': current,
+        'longest_streak': longest,
+        'recent': [d.isoformat() for d in reversed(all_dates[-10:])],
+    })
+
+
 @login_required
 def cancel_booking(request, booking_id):
     if request.method == 'POST':
