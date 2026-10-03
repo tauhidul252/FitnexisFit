@@ -1,11 +1,12 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import FitnessProgress
+from .models import Attendance, FitnessProgress
+from .views import compute_attendance_streaks
 
 
 class ProgressBackendTests(TestCase):
@@ -70,3 +71,66 @@ class ProgressBackendTests(TestCase):
         FitnessProgress.objects.all().delete()
         d = self.client.get(reverse('progress_data')).json()
         self.assertEqual((d['count'], d['summary']['weight']), (0, None))
+
+
+class AttendanceStreakTests(TestCase):
+    TODAY = date(2026, 10, 7)  # a Wednesday
+
+    def test_no_visits(self):
+        self.assertEqual(compute_attendance_streaks([], self.TODAY), (0, 0))
+
+    def test_consecutive_weeks_including_this_one(self):
+        ds = [date(2026, 10, 6), date(2026, 9, 30), date(2026, 9, 22)]
+        self.assertEqual(compute_attendance_streaks(ds, self.TODAY), (3, 3))
+
+    def test_streak_alive_if_only_last_week_visited(self):
+        self.assertEqual(compute_attendance_streaks([date(2026, 9, 30)], self.TODAY), (1, 1))
+
+    def test_streak_broken_after_missed_week(self):
+        ds = [date(2026, 9, 22), date(2026, 9, 14), date(2026, 9, 8)]  # latest is 2 weeks ago
+        self.assertEqual(compute_attendance_streaks(ds, self.TODAY), (0, 3))
+
+    def test_longest_differs_from_current(self):
+        ds = [date(2026, 8, 3), date(2026, 8, 10), date(2026, 8, 17), date(2026, 10, 5)]
+        self.assertEqual(compute_attendance_streaks(ds, self.TODAY), (1, 3))
+
+    def test_multiple_visits_same_week_count_once(self):
+        ds = [date(2026, 10, 5), date(2026, 10, 6), date(2026, 10, 7)]
+        self.assertEqual(compute_attendance_streaks(ds, self.TODAY), (1, 1))
+
+
+class AttendanceDataTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('a1', password='pw12345!')
+        self.other = User.objects.create_user('a2', password='pw12345!')
+        self.client.login(username='a1', password='pw12345!')
+
+    def test_requires_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('attendance_data')).status_code, 302)
+
+    def test_month_data_only_own_present_visits(self):
+        Attendance.objects.create(user=self.user, date=date(2026, 3, 2))
+        Attendance.objects.create(user=self.user, date=date(2026, 3, 9))
+        Attendance.objects.create(user=self.user, date=date(2026, 3, 10), is_present=False)
+        Attendance.objects.create(user=self.user, date=date(2026, 2, 27))
+        Attendance.objects.create(user=self.other, date=date(2026, 3, 5))
+        d = self.client.get(reverse('attendance_data'), {'month': '2026-03'}).json()
+        self.assertEqual((d['year'], d['month']), (2026, 3))
+        self.assertEqual(d['days'], [2, 9])
+        self.assertEqual(d['month_count'], 2)
+        self.assertEqual(d['total'], 3)
+        self.assertEqual(d['recent'][0], '2026-03-09')
+
+    def test_bad_month_falls_back_to_current(self):
+        today = timezone.localdate()
+        for bad in ('', 'x', '2026-13', '99999-01', '2026'):
+            d = self.client.get(reverse('attendance_data'), {'month': bad}).json()
+            self.assertEqual((d['year'], d['month']), (today.year, today.month), bad)
+
+    def test_this_month_count_ignores_viewed_month(self):
+        today = timezone.localdate()
+        Attendance.objects.create(user=self.user, date=today)
+        d = self.client.get(reverse('attendance_data'), {'month': '2020-01'}).json()
+        self.assertEqual(d['this_month_count'], 1)
+        self.assertEqual(d['month_count'], 0)

@@ -12,6 +12,7 @@
             <nav class="side-nav">
                 <a href="javascript:void(0)" onclick="showSection('overview', this)" class="nav-btn active">Overview</a>
                 <a href="javascript:void(0)" onclick="showSection('progress', this)" class="nav-btn">Progress</a>
+                <a href="javascript:void(0)" onclick="showSection('attendance', this)" class="nav-btn">Attendance</a>
                 <a href="javascript:void(0)" onclick="showSection('classes', this)" class="nav-btn">Classes</a>
                 <a href="{% url 'membership_plans' %}">Membership</a>
                 <a href="javascript:alert('Settings page coming soon!')">Settings</a>
@@ -111,6 +112,38 @@
                         {% empty %}
                         <p>No progress recorded yet.</p>
                         {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: ATTENDANCE -->
+            <div id="section-attendance" class="dash-section" style="display: none;">
+                <header class="dash-header">
+                    <h2>Attendance</h2>
+                    <p>Your visits, streaks and monthly activity.</p>
+                </header>
+
+                <div class="pg-summary at-summary">
+                    <div class="pg-tile"><h4>Attended This Month</h4><p class="pg-val" id="at-month">–</p><p class="pg-delta">classes</p></div>
+                    <div class="pg-tile" style="border-top-color:#22c55e;"><h4>Current Streak</h4><p class="pg-val" id="at-current">–</p><p class="pg-delta" id="at-current-sub">weeks in a row</p></div>
+                    <div class="pg-tile" style="border-top-color:#a78bfa;"><h4>Longest Streak</h4><p class="pg-val" id="at-longest">–</p><p class="pg-delta">weeks in a row</p></div>
+                    <div class="pg-tile" style="border-top-color:#38bdf8;"><h4>All-Time Visits</h4><p class="pg-val" id="at-total">–</p><p class="pg-delta">classes</p></div>
+                </div>
+
+                <div class="at-grid">
+                    <div class="content-card">
+                        <div class="at-cal-head">
+                            <button type="button" class="pg-range" id="at-prev" aria-label="Previous month">&lsaquo;</button>
+                            <h3 id="at-title" style="margin:0;">&nbsp;</h3>
+                            <button type="button" class="pg-range" id="at-next" aria-label="Next month">&rsaquo;</button>
+                        </div>
+                        <div class="at-cal" id="at-cal" role="grid" aria-label="Attendance calendar"></div>
+                        <p class="at-legend"><span class="at-dot"></span> Attended &nbsp; <span class="at-dot today"></span> Today</p>
+                        <p id="at-error" class="pg-error" style="display:none;">Couldn't load attendance. Please refresh and try again.</p>
+                    </div>
+                    <div class="content-card">
+                        <h3 style="margin: 0 0 1rem;">Recent Visits</h3>
+                        <div id="at-recent"></div>
                     </div>
                 </div>
             </div>
@@ -581,6 +614,26 @@
         .pg-summary { grid-template-columns: 1fr; }
         .pg-canvas-wrap { height: 280px; }
     }
+
+    /* Attendance */
+    .at-summary { grid-template-columns: repeat(4, 1fr); }
+    .at-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem; }
+    .at-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .at-cal-head .pg-range { font-size: 1.1rem; padding: 0.2rem 0.8rem; }
+    .at-cal-head .pg-range:disabled { opacity: 0.3; cursor: default; }
+    .at-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+    .at-dow { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; padding-bottom: 4px; }
+    .at-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.85rem; color: #bbb; background: rgba(255,255,255,0.03); }
+    .at-day.on { background: var(--accent); color: #000; font-weight: 800; }
+    .at-day.today { outline: 2px solid #fff; outline-offset: -2px; }
+    .at-legend { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; }
+    .at-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); vertical-align: middle; }
+    .at-dot.today { background: transparent; outline: 2px solid #fff; outline-offset: -2px; }
+    .at-visit { display: flex; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid #333; font-size: 0.9rem; }
+    .at-visit:last-child { border-bottom: none; }
+    .at-visit span:last-child { color: var(--text-muted); }
+    @media (max-width: 900px) { .at-summary { grid-template-columns: repeat(2, 1fr); } .at-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .at-summary { grid-template-columns: repeat(2, 1fr); } }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -702,6 +755,83 @@
     // Load lazily: a chart drawn inside a hidden tab gets zero size.
     function pgOnShow() { pgLoad(); }
 
+    // ---- Attendance ----
+    const AT = { url: "{% url 'attendance_data' %}", ym: null, current: null };
+
+    function atToday() {
+        const n = new Date();
+        return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate() };
+    }
+
+    async function atLoad() {
+        const err = document.getElementById('at-error');
+        try {
+            const q = AT.ym ? '?month=' + AT.ym.y + '-' + String(AT.ym.m).padStart(2, '0') : '';
+            const resp = await fetch(AT.url + q, { headers: { 'Accept': 'application/json' } });
+            if (!resp.ok) throw new Error(resp.status);
+            const d = await resp.json();
+            err.style.display = 'none';
+            AT.ym = { y: d.year, m: d.month };
+            atRender(d);
+        } catch (e) {
+            err.style.display = 'block';
+        }
+    }
+
+    function atRender(d) {
+        document.getElementById('at-month').textContent = d.this_month_count;
+        document.getElementById('at-current').textContent = d.current_streak;
+        document.getElementById('at-longest').textContent = d.longest_streak;
+        document.getElementById('at-total').textContent = d.total;
+        document.getElementById('at-current-sub').textContent = d.current_streak === 1 ? 'week in a row' : 'weeks in a row';
+
+        const first = new Date(Date.UTC(d.year, d.month - 1, 1));
+        document.getElementById('at-title').textContent =
+            first.toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }) +
+            (d.month_count ? ' · ' + d.month_count + ' visit' + (d.month_count === 1 ? '' : 's') : '');
+        const t = atToday();
+        const isCurrent = d.year === t.y && d.month === t.m;
+        document.getElementById('at-next').disabled = d.year > t.y || (d.year === t.y && d.month >= t.m);
+
+        const cal = document.getElementById('at-cal');
+        cal.textContent = '';
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (l) {
+            const el = document.createElement('div'); el.className = 'at-dow'; el.textContent = l; cal.appendChild(el);
+        });
+        for (let i = 0; i < first.getUTCDay(); i++) cal.appendChild(document.createElement('div'));
+        const total = new Date(Date.UTC(d.year, d.month, 0)).getUTCDate();
+        const attended = new Set(d.days);
+        for (let day = 1; day <= total; day++) {
+            const el = document.createElement('div');
+            el.className = 'at-day' + (attended.has(day) ? ' on' : '') + (isCurrent && day === t.d ? ' today' : '');
+            el.textContent = day;
+            if (attended.has(day)) el.title = 'Attended';
+            cal.appendChild(el);
+        }
+
+        const recent = document.getElementById('at-recent');
+        recent.textContent = '';
+        if (!d.recent.length) {
+            const p = document.createElement('p'); p.textContent = 'No visits recorded yet. Your trainer marks attendance after each class.'; recent.appendChild(p);
+        }
+        d.recent.forEach(function (iso) {
+            const dt = new Date(iso + 'T00:00:00Z');
+            const row = document.createElement('div'); row.className = 'at-visit';
+            const a = document.createElement('span'); a.textContent = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+            const b = document.createElement('span'); b.textContent = 'Attended';
+            row.appendChild(a); row.appendChild(b); recent.appendChild(row);
+        });
+    }
+
+    function atShift(delta) {
+        const base = AT.ym || { y: atToday().y, m: atToday().m };
+        const dt = new Date(Date.UTC(base.y, base.m - 1 + delta, 1));
+        AT.ym = { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1 };
+        atLoad();
+    }
+    document.getElementById('at-prev').addEventListener('click', function () { atShift(-1); });
+    document.getElementById('at-next').addEventListener('click', function () { atShift(1); });
+
     function showSection(sectionId, element) {
         // Hide all sections
         document.querySelectorAll('.dash-section').forEach(function (sec) {
@@ -717,6 +847,7 @@
         });
         element.classList.add('active');
         if (sectionId === 'progress') pgOnShow();
+        if (sectionId === 'attendance') { AT.ym = null; atLoad(); }
     }
 
     function toggleModal(id) {
