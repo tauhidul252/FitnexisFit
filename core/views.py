@@ -292,6 +292,74 @@ def attendance_data(request):
 
 
 @login_required
+def account_settings(request):
+    """Profile, password and deactivation settings for any logged-in role."""
+    from django.contrib.auth import logout, update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+    from .forms import UserSettingsForm, ProfileSettingsForm
+
+    user = request.user
+    profile = user.profile
+    forms_ctx = {
+        'user_form': UserSettingsForm(instance=user),
+        'profile_form': ProfileSettingsForm(instance=profile),
+        'password_form': PasswordChangeForm(user),
+    }
+    error_in = None
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'profile':
+            # Read before the form binds: validation assigns the upload to this instance.
+            old_pic = profile.profile_pic.name if profile.profile_pic else None
+            user_form = UserSettingsForm(request.POST, instance=user)
+            profile_form = ProfileSettingsForm(request.POST, request.FILES, instance=profile)
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                prof = profile_form.save(commit=False)
+                if profile_form.cleaned_data.get('remove_photo') and 'profile_pic' not in request.FILES:
+                    prof.profile_pic = None
+                prof.save()
+                # Drop the replaced/removed file so uploads don't pile up on disk.
+                new_pic = prof.profile_pic.name if prof.profile_pic else None
+                if old_pic and old_pic != new_pic:
+                    prof._meta.get_field('profile_pic').storage.delete(old_pic)
+                messages.success(request, "Profile updated.")
+                return redirect(reverse('account_settings') + '#profile')
+            profile.refresh_from_db()  # drop the unsaved upload so the navbar avatar stays correct
+            forms_ctx.update(user_form=user_form, profile_form=profile_form)
+            error_in = 'profile'
+
+        elif action == 'password':
+            password_form = PasswordChangeForm(user, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, password_form.user)  # keep them logged in
+                messages.success(request, "Password changed.")
+                return redirect(reverse('account_settings') + '#password')
+            forms_ctx['password_form'] = password_form
+            error_in = 'password'
+
+        elif action == 'deactivate':
+            if profile.role == 'admin':
+                messages.error(request, "Admin accounts can't be deactivated here.")
+            elif not user.check_password(request.POST.get('confirm_password', '')):
+                messages.error(request, "Incorrect password. Your account was not deactivated.")
+                error_in = 'deactivate'
+            else:
+                # Deactivate rather than delete so payment and booking history is kept.
+                user.is_active = False
+                user.save(update_fields=['is_active'])
+                logout(request)
+                messages.success(request, "Your account has been deactivated.")
+                return redirect('home')
+
+    forms_ctx.update(error_in=error_in, role=profile.role)
+    return render(request, 'settings.html', forms_ctx)
+
+
+@login_required
 def cancel_booking(request, booking_id):
     if request.method == 'POST':
         try:

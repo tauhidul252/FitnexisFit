@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-dark" style="padding-top: 110px; min-height: 100vh;">
+    <div class="st-wrap">
+        <header class="st-head">
+            <div>
+                <h2>Account Settings</h2>
+                <p>Manage your profile, password and account.</p>
+            </div>
+            <a href="{% url 'dashboard' %}" class="st-back">&larr; Back to dashboard</a>
+        </header>
+
+        {% for msg in messages %}
+        <div class="st-flash {{ msg.tags }}" role="status">{{ msg }}</div>
+        {% endfor %}
+
+        <!-- Profile -->
+        <details class="st-acc" id="profile" name="settings"{% if error_in == 'profile' %} open{% endif %}>
+            <summary>
+                <i class="fas fa-user"></i>
+                <span class="st-sum-text"><strong>Profile</strong><small>Name, contact details and photo</small></span>
+                <i class="fas fa-chevron-down st-chev"></i>
+            </summary>
+            <form method="POST" enctype="multipart/form-data" class="st-body">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="profile">
+            
+
+            <div class="st-photo">
+                <img src="{% if request.user.profile.profile_pic %}{{ request.user.profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ request.user.username }}&background=f5b026&color=000&size=96{% endif %}" alt="Current photo">
+                <div>
+                    <label for="id_profile_pic">Profile photo</label>
+                    <input type="file" name="profile_pic" id="id_profile_pic" accept="image/*">
+                    {% for e in profile_form.profile_pic.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                    {% if request.user.profile.profile_pic %}
+                    <label class="st-check"><input type="checkbox" name="remove_photo"> Remove current photo</label>
+                    {% endif %}
+                    <p class="st-help">JPG, PNG or WebP, up to 5 MB.</p>
+                </div>
+            </div>
+
+            <div class="st-row">
+                <div class="st-field">
+                    <label>Username</label>
+                    <input type="text" value="{{ request.user.username }}" disabled>
+                </div>
+                <div class="st-field">
+                    <label for="{{ user_form.email.id_for_label }}">Email</label>
+                    {{ user_form.email }}
+                    {% for e in user_form.email.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                </div>
+            </div>
+            <div class="st-row">
+                <div class="st-field">
+                    <label for="{{ user_form.first_name.id_for_label }}">First name</label>
+                    {{ user_form.first_name }}
+                    {% for e in user_form.first_name.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                </div>
+                <div class="st-field">
+                    <label for="{{ user_form.last_name.id_for_label }}">Last name</label>
+                    {{ user_form.last_name }}
+                    {% for e in user_form.last_name.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                </div>
+            </div>
+            <div class="st-row">
+                <div class="st-field">
+                    <label for="{{ profile_form.phone.id_for_label }}">Phone</label>
+                    {{ profile_form.phone }}
+                    {% for e in profile_form.phone.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                </div>
+                {% if profile_form.specialty %}
+                <div class="st-field">
+                    <label for="{{ profile_form.specialty.id_for_label }}">Specialty</label>
+                    {{ profile_form.specialty }}
+                    {% for e in profile_form.specialty.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="st-field">
+                <label for="{{ profile_form.address.id_for_label }}">Address</label>
+                {{ profile_form.address }}
+                {% for e in profile_form.address.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="st-field">
+                <label for="{{ profile_form.bio.id_for_label }}">Bio</label>
+                {{ profile_form.bio }}
+                {% for e in profile_form.bio.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+            </div>
+            <button type="submit" class="st-btn">Save profile</button>
+        </form>
+        </details>
+
+        <!-- Password -->
+        <details class="st-acc" id="password" name="settings"{% if error_in == 'password' %} open{% endif %}>
+            <summary>
+                <i class="fas fa-lock"></i>
+                <span class="st-sum-text"><strong>Change password</strong><small>Update your login password</small></span>
+                <i class="fas fa-chevron-down st-chev"></i>
+            </summary>
+            <form method="POST" class="st-body" autocomplete="off">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password">
+            
+            {% for field in password_form %}
+            <div class="st-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for e in field.errors %}<p class="st-err">{{ e }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="st-btn">Update password</button>
+        </form>
+        </details>
+
+        <!-- Deactivate -->
+        {% if role != 'admin' %}
+        <details class="st-acc st-danger" id="deactivate" name="settings"{% if error_in == 'deactivate' %} open{% endif %}>
+            <summary>
+                <i class="fas fa-user-slash"></i>
+                <span class="st-sum-text"><strong>Deactivate account</strong><small>Turn off your account</small></span>
+                <i class="fas fa-chevron-down st-chev"></i>
+            </summary>
+            <form method="POST" class="st-body">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="deactivate">
+            
+            <p class="st-help">You'll be logged out and won't be able to sign in. Your payment and booking history is kept. Contact the gym to reactivate.</p>
+            <div class="st-field">
+                <label for="confirm_password">Confirm your password</label>
+                <input type="password" name="confirm_password" id="confirm_password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="st-btn st-btn-danger" onclick="return confirm('Deactivate your account? You will be logged out.');">Deactivate my account</button>
+        </form>
+        </details>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    .st-wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 4rem; }
+    .st-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .st-head h2 { margin: 0; }
+    .st-head p { color: var(--text-muted); margin: 0.3rem 0 0; }
+    .st-back { color: var(--accent); font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+    .st-acc { background: var(--bg-dark-secondary); border: 1px solid #333; border-radius: 14px; margin-bottom: 1rem; overflow: hidden; }
+    .st-acc[open] { border-color: var(--accent); }
+    .st-acc.st-danger[open] { border-color: #ef4444; }
+    .st-acc summary { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.3rem; cursor: pointer; list-style: none; user-select: none; }
+    .st-acc summary::-webkit-details-marker { display: none; }
+    .st-acc summary:hover { background: rgba(255, 255, 255, 0.03); }
+    .st-acc summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .st-acc summary > i:first-child { width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 176, 38, 0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .st-acc.st-danger summary > i:first-child { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .st-sum-text { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; }
+    .st-sum-text strong { font-size: 1rem; }
+    .st-sum-text small { color: var(--text-muted); font-size: 0.78rem; }
+    .st-chev { color: var(--text-muted); transition: transform 0.25s; }
+    .st-acc[open] .st-chev { transform: rotate(180deg); }
+    .st-body { padding: 0.5rem 1.5rem 1.5rem; border-top: 1px solid #333; padding-top: 1.3rem; }
+    .st-card { background: var(--bg-dark-secondary); border: 1px solid #333; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .st-card h3 { margin: 0 0 1.2rem; font-size: 1.15rem; }
+    .st-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .st-field { margin-bottom: 1rem; }
+    .st-field label, .st-photo label { display: block; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.35rem; }
+    .st-field input, .st-field textarea { width: 100%; padding: 0.7rem 0.8rem; background: #121212; color: #fff; border: 1px solid #444; border-radius: 8px; font: inherit; font-size: 0.9rem; box-sizing: border-box; }
+    .st-field input:focus, .st-field textarea:focus { outline: none; border-color: var(--accent); }
+    .st-field input:disabled { opacity: 0.55; cursor: not-allowed; }
+    .st-photo { display: flex; align-items: center; gap: 1.2rem; margin-bottom: 1.2rem; }
+    .st-photo img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); flex-shrink: 0; }
+    .st-photo input[type=file] { color: var(--text-muted); font-size: 0.85rem; max-width: 100%; }
+    .st-check { display: flex !important; align-items: center; gap: 0.4rem; margin-top: 0.5rem; font-weight: 500 !important; }
+    .st-help { font-size: 0.75rem; color: var(--text-muted); margin: 0.4rem 0 0; }
+    .st-err { font-size: 0.78rem; color: #ef4444; margin: 0.3rem 0 0; }
+    .st-btn { background: var(--accent); color: #000; font-weight: 800; border: none; border-radius: 8px; padding: 0.7rem 1.4rem; cursor: pointer; font-size: 0.9rem; }
+    .st-btn:hover { filter: brightness(1.08); }
+    .st-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .st-danger { border-color: rgba(239, 68, 68, 0.5); }
+    .st-btn-danger { background: transparent; color: #ef4444; border: 1px solid #ef4444; }
+    .st-btn-danger:hover { background: #ef4444; color: #fff; filter: none; }
+    .st-flash { padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; background: rgba(34, 197, 94, 0.12); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .st-flash.error { background: rgba(239, 68, 68, 0.12); color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+    @media (max-width: 600px) { .st-row { grid-template-columns: 1fr; } .st-photo { flex-direction: column; align-items: flex-start; } }
+</style>
+<script>
+    (function () {
+        var accs = document.querySelectorAll('.st-acc');
+        // Exclusive accordion even where the <details name> attribute isn't supported.
+        accs.forEach(function (a) {
+            a.addEventListener('toggle', function () {
+                if (a.open) accs.forEach(function (o) { if (o !== a) o.open = false; });
+            });
+        });
+        var target = document.getElementById((location.hash || '').slice(1));
+        if (target && target.classList.contains('st-acc')) target.open = true;
+        else if (!document.querySelector('.st-acc[open]')) document.getElementById('profile').open = true;
+    })();
+</script>
+{% if error_in %}
+<script>
+    // Bring the form that failed validation into view.
+    document.getElementById('{{ error_in }}').scrollIntoView({ block: 'start' });
+</script>
+{% endif %}
+{% endblock %}

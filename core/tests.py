@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 
 from django.contrib.auth.models import User
+from unittest import mock
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -134,3 +136,147 @@ class AttendanceDataTests(TestCase):
         d = self.client.get(reverse('attendance_data'), {'month': '2020-01'}).json()
         self.assertEqual(d['this_month_count'], 1)
         self.assertEqual(d['month_count'], 0)
+
+
+class AccountSettingsTests(TestCase):
+    def setUp(self):
+        # Django 4.2's test client crashes copying template contexts on Python 3.14,
+        # so skip its context capture and assert on rendered content instead.
+        patcher = mock.patch('django.test.client.store_rendered_templates')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.user = User.objects.create_user('s1', 's1@x.com', 'OldPass!2345')
+        self.other = User.objects.create_user('s2', 's2@x.com', 'OldPass!2345')
+        self.url = reverse('account_settings')
+        self.client.login(username='s1', password='OldPass!2345')
+
+    def test_requires_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_page_renders_for_each_role(self):
+        for role in ('member', 'trainer', 'admin'):
+            self.user.profile.role = role
+            self.user.profile.save()
+            resp = self.client.get(self.url)
+            self.assertEqual(resp.status_code, 200, role)
+            self.assertEqual(b'Specialty' in resp.content, role == 'trainer')
+            self.assertEqual(b'Deactivate account' in resp.content, role != 'admin')
+
+    def test_profile_update(self):
+        self.client.post(self.url, {
+            'action': 'profile', 'first_name': 'Sam', 'last_name': 'Lee', 'email': 'new@x.com',
+            'phone': '+8801712345678', 'address': 'Dhaka', 'bio': 'hi'})
+        self.user.refresh_from_db()
+        self.assertEqual((self.user.first_name, self.user.email), ('Sam', 'new@x.com'))
+        self.assertEqual(self.user.profile.phone, '+8801712345678')
+
+    def test_profile_rejects_duplicate_email_and_bad_phone(self):
+        resp = self.client.post(self.url, {'action': 'profile', 'email': 'S2@x.com', 'phone': 'abc'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'already used by another account')
+        self.assertContains(resp, 'Enter a valid phone number')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 's1@x.com')
+
+    def test_own_email_resubmit_is_fine(self):
+        resp = self.client.post(self.url, {'action': 'profile', 'email': 's1@x.com'})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_password_change_keeps_session(self):
+        resp = self.client.post(self.url, {
+            'action': 'password', 'old_password': 'OldPass!2345',
+            'new_password1': 'BrandNew!9876', 'new_password2': 'BrandNew!9876'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(self.client.get(self.url).status_code, 200)  # still logged in
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('BrandNew!9876'))
+
+    def test_password_change_wrong_old_password(self):
+        resp = self.client.post(self.url, {
+            'action': 'password', 'old_password': 'nope',
+            'new_password1': 'BrandNew!9876', 'new_password2': 'BrandNew!9876'})
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('OldPass!2345'))
+
+    def test_deactivate_requires_password(self):
+        self.client.post(self.url, {'action': 'deactivate', 'confirm_password': 'wrong'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+    def test_deactivate_logs_out_and_keeps_data(self):
+        self.client.post(self.url, {'action': 'deactivate', 'confirm_password': 'OldPass!2345'})
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        self.assertEqual(self.client.get(self.url).status_code, 302)  # logged out
+
+    def test_admin_cannot_deactivate(self):
+        self.user.profile.role = 'admin'
+        self.user.profile.save()
+        self.client.post(self.url, {'action': 'deactivate', 'confirm_password': 'OldPass!2345'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+
+import io
+import os
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+from PIL import Image
+
+
+def _png(name='p.png', size=(4, 4)):
+    buf = io.BytesIO()
+    Image.new('RGB', size, 'red').save(buf, 'PNG')
+    return SimpleUploadedFile(name, buf.getvalue(), content_type='image/png')
+
+
+class SettingsPhotoTests(TestCase):
+    def setUp(self):
+        patcher = mock.patch('django.test.client.store_rendered_templates')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        override = override_settings(MEDIA_ROOT=self.tmp.name)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.user = User.objects.create_user('ph', 'ph@x.com', 'OldPass!2345')
+        self.client.login(username='ph', password='OldPass!2345')
+        self.url = reverse('account_settings')
+
+    def _profile(self, **extra):
+        return self.client.post(self.url, {'action': 'profile', 'email': 'ph@x.com', **extra})
+
+    def test_upload_replace_and_remove(self):
+        self._profile(profile_pic=_png('a.png'))
+        self.user.profile.refresh_from_db()
+        first = self.user.profile.profile_pic.path
+        self.assertTrue(os.path.exists(first))
+
+        self._profile(profile_pic=_png('b.png'))  # replacing deletes the old file
+        self.user.profile.refresh_from_db()
+        self.assertFalse(os.path.exists(first))
+        second = self.user.profile.profile_pic.path
+        self.assertTrue(os.path.exists(second))
+
+        self._profile(remove_photo='on')
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.profile_pic)
+        self.assertFalse(os.path.exists(second))
+
+    def test_saving_without_file_keeps_photo(self):
+        self._profile(profile_pic=_png())
+        self._profile(phone='123456')
+        self.user.profile.refresh_from_db()
+        self.assertTrue(self.user.profile.profile_pic)
+
+    def test_non_image_rejected(self):
+        bad = SimpleUploadedFile('x.png', b'not an image', content_type='image/png')
+        resp = self._profile(profile_pic=bad)
+        self.assertEqual(resp.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.profile_pic)
